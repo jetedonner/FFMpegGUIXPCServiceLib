@@ -1,0 +1,28 @@
+//
+//  BaseProgressListener.swift
+//  FFMpegGUIXPCServiceLib
+//
+//  Created by Kim-David Hauser on 14.06.2026.
+//
+
+
+import Foundation
+import FFMpegSwiftManagerLib
+
+@objc(BaseProgressListenerLib)
+public protocol BaseProgressListenerLib {
+    func onLogMsg(_ msg: LogMsg)
+    func onBatchTaskProgress(id: UUID, progress: Double)
+    func onSingleTaskProgress(id: UUID, progress: Double)
+    func onCompleted(_ result: TaskResult)
+}
+
+@objc(MediaProgressListenerLib)
+public protocol MediaProgressListenerLib: BaseProgressListenerLib {
+    func onMediaStateChanged(id: UUID, result: TaskTypeBase)
+}
+
+@objc(ImportProgressListenerLib)
+public protocol ImportProgressListenerLib: MediaProgressListenerLib, Sendable {
+    func onImportedMedia(_ media: MediaDetails)
+}
