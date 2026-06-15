@@ -14,8 +14,14 @@ import FFMpegSwiftManagerLib
     
     func ping(withReply reply: @escaping () -> Void)
     
+    func cancelTask(taskID: UUID, withReply reply: @escaping () -> Void)
+    
     func startImportTask(taskConfig: XPCServiceImportTaskConfig, listener: ImportProgressListenerLib, withReply reply: @escaping @Sendable (UUID?, Error?) -> Void)
     
     func observeImportProgress(taskID: UUID, withReply reply: @escaping (Double, Bool, Error?) -> Void)
+    
+    func startIntegrityCheckTask(md: [MediaDetails], taskConfig: XPCServiceIntegrityCheckTaskConfig, listener: IntegrityCheckProgressListenerLib, withReply reply: @escaping @Sendable (UUID?, Error?) -> Void)
+    
+    func observeCheckIntegrityProgress(taskID: UUID, withReply reply: @escaping (Double, Bool, Error?) -> Void)
     
 }

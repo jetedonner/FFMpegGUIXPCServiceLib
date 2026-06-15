@@ -5,7 +5,6 @@
 //  Created by Kim-David Hauser on 14.06.2026.
 //
 
-
 import Foundation
 import FFMpegSwiftManagerLib
 
@@ -24,5 +23,10 @@ public protocol MediaProgressListenerLib: BaseProgressListenerLib {
 
 @objc(ImportProgressListenerLib)
 public protocol ImportProgressListenerLib: MediaProgressListenerLib, Sendable {
+    func onImportedMedia(_ media: MediaDetails)
+}
+
+@objc(IntegrityCheckProgressListenerLib)
+public protocol IntegrityCheckProgressListenerLib: MediaProgressListenerLib, Sendable {
     func onImportedMedia(_ media: MediaDetails)
 }
