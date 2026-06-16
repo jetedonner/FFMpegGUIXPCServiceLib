@@ -334,109 +334,6 @@ public class FFMpegXPCService: NSObject, FFMpegXPCServiceProtocol, @unchecked Se
         listener.onCompleted(TaskResult(id: id, progress: 1.0, success: true))
         reply(id, nil)
     }
-//    public func startIntegrityCheckTask(md: [MediaDetails], taskConfig: XPCServiceIntegrityCheckTaskConfig, listener: IntegrityCheckProgressListenerLibImpl, withReply reply: @escaping @Sendable (UUID?, Error?) -> Void) {
-//     
-//        logger.info("startIntegrityCheckTaskNG called")
-//        
-//        let id = UUID()
-//        
-//        let task = Task {
-//            do {
-////                try await performConversion(id: id, md: md, listener: listener, maxConcurrent: 5, type: type, withReply: reply)
-//                try await self.performIntegrityCheckNG(id: id, md: md, listener: listener, type: taskConfig.ffmpegType, withReply: reply)
-//            } catch {
-//                if !(error is CancellationError) /*, let taskID = currentTaskID*/ {
-//                    self.logger.error("IntegrityCheck task \(id.uuidString, privacy: .public) failed: \(error.localizedDescription, privacy: .public)")
-//                    print("IntegrityCheck task \(id.uuidString) failed: \(error.localizedDescription)")
-////                    listener.onLogMsg(LogMsg(msg: "Import task \(id.uuidString) failed: \(error.localizedDescription)"))
-//                }
-//            }
-//            self.queue.async {
-//                self.tasks[id] = nil
-//            }
-//        }
-//        
-//        queue.async {
-//            self.tasks[id] = task
-//        }
-//        
-//        reply(id, nil)
-//    }
-//    
-//    func performIntegrityCheckNG(id: UUID, md: [MediaDetails], listener: IntegrityCheckProgressListenerLibImpl, maxConcurrent: Int = 5, type: FFMpegResourceType = .linkedLibraries, withReply reply: @escaping (UUID?, Error?) -> Void) async throws {
-////        let file = md
-//        //        let files = FileSystemManager.mediaFilesInPath(in: URL(fileURLWithPath: md.filename).deletingLastPathComponent())
-//        let totalCount = md.count
-//        
-//        // Create a TaskGroup to handle concurrent processing
-//        try await withThrowingTaskGroup(of: Void.self) { group in
-//            var activeTasks = 0
-//            var completedCount = 0
-//            
-//            if(md.count <= 0){
-//                CheckIntegrityProgressStore.shared.setProgress(1.0, for: id, done: true)
-//            }else{
-//                for file in md {
-//                // 1. If we hit our concurrency limit, wait for one task to finish
-//                if activeTasks >= maxConcurrent {
-//                    _ = try await group.next()
-//                    activeTasks -= 1
-//                    completedCount += 1
-//                    
-//                    // Safe to report overall batch progress here
-////                    listener.onProgress(ProgressUpdate(allCount: totalCount, current: completedCount)) //  completedCount, totalCount)
-//                    try Task.checkCancellation()
-//                    let progress = Double(completedCount) / Double(totalCount)
-//                    CheckIntegrityProgressStore.shared.setProgress(progress, for: id, done: completedCount == totalCount)
-//                }
-//                
-//                activeTasks += 1
-//                group.addTask {
-//    //                do {
-//                        //                            let md = try await self.getFFProbeForType(type).runFFProbe(on: URL(fileURLWithPath: file.path))
-//                        //                            if md.filename == "/" ||  md.filename == "" {
-//                        //                                return
-//                        //                            }
-//                        
-//                        //                            listener.onImportedMedia(md)
-////                        listener.onMediaStateChanged(id: file.id, result: .validating)
-//                        
-//                        let res = try await self.getFFProbeForType(type).checkIntegrity(item: file) { progress in
-//                            // Force the UI update to hop back to the Main Actor safely
-//    //                        Task { @MainActor in
-////                            DispatchQueue.main.async {
-//                                print("Progress: \(progress)")
-//                            listener.onSingleTaskProgress(id: file.id, progress: progress)
-////                                listener.onFileIntegrityProgress(id: file.id, progress: progress)
-////                            }
-//                        }
-//                        if(res != .success){
-//                            listener.onMediaStateChanged(id: file.id, result: .corrupted)
-//                        }else{
-//                            listener.onMediaStateChanged(id:file.id, result: .validated)
-//                        }
-//    //                } catch {
-//    //                    print("Failed to process \(md.filename): \(error)")
-//    //                }
-//                    }
-//                }
-//                
-//                // 3. Drain the remaining tasks in the final batch
-//                for try await _ in group {
-//                    completedCount += 1
-////                    listener.onProgress(ProgressUpdate(allCount: totalCount, current: completedCount))  // )(completedCount, totalCount)
-//                    
-//                    try Task.checkCancellation()
-//                    let progress = Double(completedCount) / Double(totalCount)
-//                    CheckIntegrityProgressStore.shared.setProgress(progress, for: id, done: completedCount == totalCount)
-//                }
-//            }
-//        }
-//        
-//        // 4. Batch complete
-//        listener.onCompleted(TaskResult(id: id, progress: 1.0, success: true))
-//        reply(id, nil)
-//    }
     
     public func observeCheckIntegrityProgress(taskID: UUID, withReply reply: @escaping (Double, Bool, Error?) -> Void) {
         CheckIntegrityProgressStore.shared.withProgress(for: taskID) { progress, done in
@@ -508,12 +405,14 @@ public class FFMpegXPCService: NSObject, FFMpegXPCServiceProtocol, @unchecked Se
                     group.addTask {
                         do {
                             
-                        listener.onMediaStateChanged(id: file.id, result: .converting)
-                            // 1. Change to a thread-safe LockedBox
+                            listener.onMediaStateChanged(id: file.id, result: .converting)
+                            
+                            await Task.yield()
+                            try await Task.sleep(nanoseconds: 100_000_000)
+                            
                             let lastTimestamp = LockedBox(Date())
                             let res = await self.getFFMpegForType(type).convertMediaFile(md: file, selectedCodec: file.mediaConversionConfig.outputCodec, progress: { progress, total, current in
-                                
-                                file.current = current
+                            
 //                                listener.onConversionProgress(id: file.id, progress: progress)
                                 // 2. Safely check and update the timestamp atomically on the spot
                                 let shouldUpdateProgress = lastTimestamp.mutate { lastTime -> Bool in
@@ -525,60 +424,74 @@ public class FFMpegXPCService: NSObject, FFMpegXPCServiceProtocol, @unchecked Se
                                     return false
                                 }
                                 
-                                // 3. If the throttle check passed, dispatch the UI update to the MainActor
-                                if shouldUpdateProgress {
+                                if shouldUpdateProgress || progress == 1.0 {
+                                    file.current = current
+    //                                    if md.taskType != .validated && md.taskType != .corrupted {
+                                        
+                                        // This call is synchronous, keeping the outer closure happy
                                     listener.onSingleTaskProgress(id: file.id, progress: progress)
-//                                    await Task.yield()
-//                                    Task { @MainActor in
-//                                        if file.taskType != .validated && file.taskType != .corrupted {
-//                                            clientProxy.didUpdateSingleImportProgress(id: file.id, progress: progress)
-                                            let currentDuration: Double = md.reduce(0) { $0 + $1.current }
-                                            let progressOverAll = Double(currentDuration) / Double(totalDuration)
-//                                        if progressOverAll >= self.oldProgressOverAll + 0.1 {
-                                            ConversionProgressStore.shared.setProgress(progressOverAll, for: id, done: currentDuration == totalDuration)
-                                            //                                            clientProxy.didUpdateBatchImportProgress(id: id, progress: progressOverAll)
-//                                        }
-//                                            await Task.yield()
-//                                        }
-//                                    }
                                     
+                                    let currentDuration: Double = md.reduce(0) { $0 + $1.current }
+                                    let progressOverAll = Double(currentDuration) / Double(totalDuration)
+                                    ConversionProgressStore.shared.setProgress(progressOverAll, for: id, done: currentDuration == totalDuration)
+//                                    await Task.yield()
+//                                    try await Task.sleep(nanoseconds: 10_000_000)
                                 }
-//                                try await Task.sleep(nanoseconds: 1_000_000)
-////                                    await Task.yield()
-////                                    isUpdating = false
-//                            }
-//                            let currentDuration: Double = md.reduce(0) { $0 + $1.current }
-//                            let progressOverAll = Double(currentDuration) / Double(totalDuration)
-////                            if progressOverAll >= self.oldProgressOverAll + 0.1 {
-//
-////                                ConversionProgressStore.shared.setProgress(progressOverAll, for: id, done: currentDuration == totalDuration)
-//                                clientProxy.didUpdateBatchImportProgress(id: id, progress: progressOverAll)
+                                    
+                                    // 3. If the throttle check passed, dispatch the UI update to the MainActor
+    //                                if shouldUpdateProgress {
+    //
+    ////                                    await Task.yield()
+    ////                                    Task { @MainActor in
+    ////                                        if file.taskType != .validated && file.taskType != .corrupted {
+    ////                                            clientProxy.didUpdateSingleImportProgress(id: file.id, progress: progress)
+    //                                            let currentDuration: Double = md.reduce(0) { $0 + $1.current }
+    //                                            let progressOverAll = Double(currentDuration) / Double(totalDuration)
+    ////                                        if progressOverAll >= self.oldProgressOverAll + 0.1 {
+    //                                            ConversionProgressStore.shared.setProgress(progressOverAll, for: id, done: currentDuration == totalDuration)
+    //                                            //                                            clientProxy.didUpdateBatchImportProgress(id: id, progress: progressOverAll)
+    ////                                        }
+    ////                                            await Task.yield()
+    ////                                        }
+    ////                                    }
+    //
+    //                                }
+    //                                try await Task.sleep(nanoseconds: 1_000_000)
+    ////                                    await Task.yield()
+    ////                                    isUpdating = false
+    //                            }
+    //                            let currentDuration: Double = md.reduce(0) { $0 + $1.current }
+    //                            let progressOverAll = Double(currentDuration) / Double(totalDuration)
+    ////                            if progressOverAll >= self.oldProgressOverAll + 0.1 {
+    //
+    ////                                ConversionProgressStore.shared.setProgress(progressOverAll, for: id, done: currentDuration == totalDuration)
+    //                                clientProxy.didUpdateBatchImportProgress(id: id, progress: progressOverAll)
 
-//                                self.oldProgressOverAll = progressOverAll
-//                            }
-////                            }
-//                            var mediaProgress: [UUID: Double] = [:]
-//                            md.forEach {
-//                                mediaProgress[$0.id] = $0.progress
-//                            }
-//                            md.forEach { mediaProgress[$0.id] = $0.current }
-                            
-//                            ConversionProgressStore.shared.setProgress(progressOverAll, for: id, done: currentDuration == totalDuration)
-//                            ConversionProgressStoreNG.shared.setProgress(progressOverAll, for: id, done: currentDuration == totalDuration, mediaProgress: mediaProgress)
-                        })
+    //                                self.oldProgressOverAll = progressOverAll
+    //                            }
+    ////                            }
+    //                            var mediaProgress: [UUID: Double] = [:]
+    //                            md.forEach {
+    //                                mediaProgress[$0.id] = $0.progress
+    //                            }
+    //                            md.forEach { mediaProgress[$0.id] = $0.current }
+                                
+    //                            ConversionProgressStore.shared.setProgress(progressOverAll, for: id, done: currentDuration == totalDuration)
+    //                            ConversionProgressStoreNG.shared.setProgress(progressOverAll, for: id, done: currentDuration == totalDuration, mediaProgress: mediaProgress)
+                            })
 
-//                        await Task.yield()
-//                        try await Task.sleep(nanoseconds: 100_000_000)
+                            await Task.yield()
+                            try await Task.sleep(nanoseconds: 100_000_000)
 
-                        if(res != .success){
-                            listener.onMediaStateChanged(id: file.id, result: .corrupted)
-//                                listener.onConversionProgress(id: file.id, progress: 1.0)
-//                                listener.onLogMsg(LogMsg(msg: "Failed to process \(file.path): \(res) > corrupted"))
-                        }else{
-                            listener.onMediaStateChanged(id: file.id, result: .converted)
-//                                listener.onConversionProgress(id: file.id, progress: 1.0)
-//                                listener.onLogMsg(LogMsg(msg: "Loaded media file \(file.path): \(res) ..."))
-                        }
+                            if(res != .success){
+                                listener.onMediaStateChanged(id: file.id, result: .corrupted)
+    //                                listener.onConversionProgress(id: file.id, progress: 1.0)
+    //                                listener.onLogMsg(LogMsg(msg: "Failed to process \(file.path): \(res) > corrupted"))
+                            }else{
+                                listener.onMediaStateChanged(id: file.id, result: .converted)
+    //                                listener.onConversionProgress(id: file.id, progress: 1.0)
+    //                                listener.onLogMsg(LogMsg(msg: "Loaded media file \(file.path): \(res) ..."))
+                            }
                         
 //                        Task { @MainActor in
 //                            listener.onConversionProgress(id: file.id, progress: 1.0)
