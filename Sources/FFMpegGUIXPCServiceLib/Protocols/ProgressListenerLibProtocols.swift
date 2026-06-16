@@ -30,3 +30,8 @@ public protocol ImportProgressListenerLib: MediaProgressListenerLib, Sendable {
 public protocol IntegrityCheckProgressListenerLib: MediaProgressListenerLib, Sendable {
     func onImportedMedia(_ media: MediaDetails)
 }
+
+@objc(ConversionProgressListenerLib)
+public protocol ConversionProgressListenerLib: MediaProgressListenerLib, Sendable {
+    func onImportedMedia(_ media: MediaDetails)
+}

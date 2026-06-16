@@ -46,3 +46,24 @@ final class CheckIntegrityProgressStore: @unchecked Sendable {
         }
     }
 }
+
+// Simple in-memory progress store
+final class ConversionProgressStore: @unchecked Sendable {
+    static let shared = ConversionProgressStore()
+
+    private var values: [UUID: (progress: Double, done: Bool)] = [:]
+    private let queue = DispatchQueue(label: "ConversionProgressStore")
+
+    func setProgress(_ progress: Double, for id: UUID, done: Bool) {
+        queue.async {
+            self.values[id] = (progress, done)
+        }
+    }
+
+    func withProgress(for id: UUID, _ block: @escaping (Double, Bool) -> Void) {
+        queue.async {
+            let value = self.values[id] ?? (0.0, false)
+            block(value.progress, value.done)
+        }
+    }
+}

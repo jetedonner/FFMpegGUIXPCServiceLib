@@ -131,4 +131,100 @@ public class ListenerHelperNG {
         
         return iface
     }
+    
+    
+    public static func getConversionProgressListenerInterface() -> NSXPCInterface {
+        
+//        let allowed = NSSet(array: [
+////            MediaDetailsDTO.self,
+//            MediaDetails.self,
+////            NSArray.self,
+//            ProgressUpdate.self,
+//            ImportResult.self,
+//            TaskResult.self,
+////            NSDictionary.self,
+//            NSUUID.self/*,
+//            UUID.self*/
+////            NSUUID.self
+//        ])
+        
+        var listenerInterface = NSXPCInterface(with: ConversionProgressListenerLib.self)
+
+//        listenerInterface.setClasses(allowed as! Set<AnyHashable>,
+//            for: #selector(ConversionProgressListener.onProgress(_:)),
+//            argumentIndex: 0,
+//            ofReply: false)
+
+//        listenerInterface.setClasses(allowed as! Set<AnyHashable>,
+//            for: #selector(ConversionProgressListener.onCompleted(_:)),
+//            argumentIndex: 0,
+//            ofReply: false)
+        
+//        listenerInterface.setClasses(allowed as! Set<AnyHashable>,
+//            for: #selector(CheckIntegrityProgressListener.onImportedMedia(_:)),
+//            argumentIndex: 0,
+//            ofReply: false)
+        
+        listenerInterface = AAllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(ConversionProgressListenerLib.onLogMsg(_:)), argumentIndex: 0, allowedObjects: NSSet(array: [
+            LogMsg.self
+        ]))
+        
+        listenerInterface = AAllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(ConversionProgressListenerLib.onCompleted(_:)), argumentIndex: 0, allowedObjects: NSSet(array: [
+            TaskResult.self
+        ]))
+        
+        listenerInterface = AAllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(ConversionProgressListenerLib.onImportedMedia(_:)), argumentIndex: 0, allowedObjects: NSSet(array: [
+            MediaDetails.self
+        ]))
+        
+        listenerInterface = AAllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(ConversionProgressListenerLib.onBatchTaskProgress(id:progress:)), argumentIndex: 0, allowedObjects: NSSet(array: [
+            NSUUID.self
+        ]))
+        
+        listenerInterface = AAllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(ConversionProgressListenerLib.onSingleTaskProgress(id:progress:)), argumentIndex: 0, allowedObjects: NSSet(array: [
+            NSUUID.self
+        ]))
+        
+        
+        listenerInterface = AAllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(ConversionProgressListenerLib.onMediaStateChanged(id:result:)), argumentIndex: 0, allowedObjects: NSSet(array: [
+            NSUUID.self
+        ]))
+        listenerInterface = AAllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(ConversionProgressListenerLib.onMediaStateChanged(id:result:)), argumentIndex: 1, allowedObjects: NSSet(array: [
+            TaskTypeBase.self
+        ]))
+        
+//        listenerInterface = AAllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(ConversionProgressListenerLib.onMediaStateChanged(id:result:)), argumentIndex: 0, allowedObjects: NSSet(array: [
+//            NSUUID.self
+//        ]))
+        
+        
+        return listenerInterface
+    }
+    
+    public static func setConversionTaskInterface(interface: NSXPCInterface) -> NSXPCInterface {
+        
+        var iface = interface
+        let selector = #selector(
+            FFMpegXPCServiceProtocol.startConversionTask(md:taskConfig:listener:withReply:)
+        )
+        
+        iface.setInterface(
+            ListenerHelperNG.getConversionProgressListenerInterface(),
+            for: selector, // #selector(FFMpegXPCServiceProtocol.startConversionTask(md:taskConfig:listener:withReply:)), // .startConversionTask(md:listener:type:withReply:)),
+            argumentIndex: 2,
+            ofReply: false
+        )
+        
+        iface = AAllowedClassesHelper.allowClassesForSelector(interface: iface, selector: selector, argumentIndex: 0, allowedObjects: NSSet(array: [
+            NSArray.self,
+            MediaDetails.self
+        ]))
+        
+        iface = AAllowedClassesHelper.allowClassesForSelector(interface: iface, selector: selector, argumentIndex: 1, allowedObjects: NSSet(array: [
+            XPCServiceConversionTaskConfig.self
+        ]))
+        
+        return iface
+    }
+    
 }
