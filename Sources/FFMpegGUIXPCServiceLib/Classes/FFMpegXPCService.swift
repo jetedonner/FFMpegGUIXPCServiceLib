@@ -617,7 +617,7 @@ public class FFMpegXPCService: NSObject, FFMpegXPCServiceProtocol, @unchecked Se
     
     public func observeConversionProgress(taskID: UUID, withReply reply: @escaping (Double, Bool, Error?) -> Void) {
         ConversionProgressStore.shared.withProgress(for: taskID) { progress, done in
-            print("ConversionProgressStore.shared.withProgress(for: \(taskID)) => \(progress), \(done)")
+//            print("ConversionProgressStore.shared.withProgress(for: \(taskID)) => \(progress), \(done)")
             reply(progress, done, nil)
         }
     }
