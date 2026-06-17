@@ -84,39 +84,59 @@ public class ImportProgressListenerLibImpl: MediaProgressListenerLibImpl, Import
 @objc
 public class IntegrityCheckProgressListenerLibImpl: MediaProgressListenerLibImpl, IntegrityCheckProgressListenerLib, @unchecked Sendable {
     
-    let onImportedMediaHandler: (MediaDetails) -> Void
-
-    public init(onLogMsg: @escaping (LogMsg) -> Void,
-         onBatchTaskProgress: @escaping (UUID, Double) -> Void,
-         onSingleTaskProgress: @escaping (UUID, Double) -> Void,
-         onCompleted: @escaping (TaskResult) -> Void,
-         onImportedMedia: @escaping (MediaDetails) -> Void,
-         onMediaStateChanged: @escaping (UUID, TaskTypeBase) -> Void) {
-        self.onImportedMediaHandler = onImportedMedia
-        super.init(onLogMsg: onLogMsg, onBatchTaskProgress: onBatchTaskProgress, onSingleTaskProgress: onSingleTaskProgress, onCompleted:  onCompleted, onMediaStateChanged: onMediaStateChanged)
-    }
-
-    public func onImportedMedia(_ media: MediaDetails) {
-        onImportedMediaHandler(media)
-    }
+//    let onImportedMediaHandler: (MediaDetails) -> Void
+//
+//    public init(onLogMsg: @escaping (LogMsg) -> Void,
+//         onBatchTaskProgress: @escaping (UUID, Double) -> Void,
+//         onSingleTaskProgress: @escaping (UUID, Double) -> Void,
+//         onCompleted: @escaping (TaskResult) -> Void,
+//        // onImportedMedia: @escaping (MediaDetails) -> Void,
+//         onMediaStateChanged: @escaping (UUID, TaskTypeBase) -> Void) {
+//        self.onImportedMediaHandler = onImportedMedia
+//        super.init(onLogMsg: onLogMsg, onBatchTaskProgress: onBatchTaskProgress, onSingleTaskProgress: onSingleTaskProgress, onCompleted:  onCompleted, onMediaStateChanged: onMediaStateChanged)
+//    }
+//
+//    public func onImportedMedia(_ media: MediaDetails) {
+//        onImportedMediaHandler(media)
+//    }
 }
 
 @objc
 public class ConversionProgressListenerLibImpl: MediaProgressListenerLibImpl, ConversionProgressListenerLib, @unchecked Sendable {
     
-    let onImportedMediaHandler: (MediaDetails) -> Void
+//    let onImportedMediaHandler: (MediaDetails) -> Void
+//
+//    public init(onLogMsg: @escaping (LogMsg) -> Void,
+//         onBatchTaskProgress: @escaping (UUID, Double) -> Void,
+//         onSingleTaskProgress: @escaping (UUID, Double) -> Void,
+//         onCompleted: @escaping (TaskResult) -> Void,
+//         onImportedMedia: @escaping (MediaDetails) -> Void,
+//         onMediaStateChanged: @escaping (UUID, TaskTypeBase) -> Void) {
+//        self.onImportedMediaHandler = onImportedMedia
+//        super.init(onLogMsg: onLogMsg, onBatchTaskProgress: onBatchTaskProgress, onSingleTaskProgress: onSingleTaskProgress, onCompleted:  onCompleted, onMediaStateChanged: onMediaStateChanged)
+//    }
+//
+//    public func onImportedMedia(_ media: MediaDetails) {
+//        onImportedMediaHandler(media)
+//    }
+}
 
-    public init(onLogMsg: @escaping (LogMsg) -> Void,
-         onBatchTaskProgress: @escaping (UUID, Double) -> Void,
-         onSingleTaskProgress: @escaping (UUID, Double) -> Void,
-         onCompleted: @escaping (TaskResult) -> Void,
-         onImportedMedia: @escaping (MediaDetails) -> Void,
-         onMediaStateChanged: @escaping (UUID, TaskTypeBase) -> Void) {
-        self.onImportedMediaHandler = onImportedMedia
-        super.init(onLogMsg: onLogMsg, onBatchTaskProgress: onBatchTaskProgress, onSingleTaskProgress: onSingleTaskProgress, onCompleted:  onCompleted, onMediaStateChanged: onMediaStateChanged)
-    }
-
-    public func onImportedMedia(_ media: MediaDetails) {
-        onImportedMediaHandler(media)
-    }
+@objc
+public class SanitizerProgressListenerLibImpl: MediaProgressListenerLibImpl, SanitizerProgressListenerLib, @unchecked Sendable {
+    
+//    let onImportedMediaHandler: (MediaDetails) -> Void
+//
+//    public init(onLogMsg: @escaping (LogMsg) -> Void,
+//         onBatchTaskProgress: @escaping (UUID, Double) -> Void,
+//         onSingleTaskProgress: @escaping (UUID, Double) -> Void,
+//         onCompleted: @escaping (TaskResult) -> Void,
+//         onImportedMedia: @escaping (MediaDetails) -> Void,
+//         onMediaStateChanged: @escaping (UUID, TaskTypeBase) -> Void) {
+//        self.onImportedMediaHandler = onImportedMedia
+//        super.init(onLogMsg: onLogMsg, onBatchTaskProgress: onBatchTaskProgress, onSingleTaskProgress: onSingleTaskProgress, onCompleted:  onCompleted, onMediaStateChanged: onMediaStateChanged)
+//    }
+//
+//    public func onImportedMedia(_ media: MediaDetails) {
+//        onImportedMediaHandler(media)
+//    }
 }
