@@ -29,6 +29,7 @@ public protocol ImportProgressListenerLib: MediaProgressListenerLib, Sendable {
 @objc(IntegrityCheckProgressListenerLib)
 public protocol IntegrityCheckProgressListenerLib: MediaProgressListenerLib, Sendable {
 //    func onImportedMedia(_ media: MediaDetails)
+//    func onCompleted(_ result: IntegrityChecktTaskResult)
 }
 
 @objc(ConversionProgressListenerLib)

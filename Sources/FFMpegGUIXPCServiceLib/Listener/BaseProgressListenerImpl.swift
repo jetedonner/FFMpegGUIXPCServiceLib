@@ -84,8 +84,14 @@ public class ImportProgressListenerLibImpl: MediaProgressListenerLibImpl, Import
 @objc
 public class IntegrityCheckProgressListenerLibImpl: MediaProgressListenerLibImpl, IntegrityCheckProgressListenerLib, @unchecked Sendable {
     
-//    let onImportedMediaHandler: (MediaDetails) -> Void
-//
+//    let integrityChecktTaskResult: IntegrityChecktTaskResult
+//    
+//    
+//    public func onCompleted(_ result: IntegrityChecktTaskResult){
+//        
+//    }
+////    let onImportedMediaHandler: (MediaDetails) -> Void
+////
 //    public init(onLogMsg: @escaping (LogMsg) -> Void,
 //         onBatchTaskProgress: @escaping (UUID, Double) -> Void,
 //         onSingleTaskProgress: @escaping (UUID, Double) -> Void,
@@ -95,10 +101,10 @@ public class IntegrityCheckProgressListenerLibImpl: MediaProgressListenerLibImpl
 //        self.onImportedMediaHandler = onImportedMedia
 //        super.init(onLogMsg: onLogMsg, onBatchTaskProgress: onBatchTaskProgress, onSingleTaskProgress: onSingleTaskProgress, onCompleted:  onCompleted, onMediaStateChanged: onMediaStateChanged)
 //    }
-//
-//    public func onImportedMedia(_ media: MediaDetails) {
-//        onImportedMediaHandler(media)
-//    }
+////
+////    public func onImportedMedia(_ media: MediaDetails) {
+////        onImportedMediaHandler(media)
+////    }
 }
 
 @objc

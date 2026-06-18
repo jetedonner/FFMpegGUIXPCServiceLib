@@ -88,7 +88,10 @@ public class FFMpegXPCService: NSObject, FFMpegXPCServiceProtocol, @unchecked Se
                     activeTasks += 1
                     group.addTask {
                         do {
-                            let md = try await self.getFFProbeForType(type).runFFProbe(on: URL(fileURLWithPath: file.path))
+                            let md = try await self.getFFProbeForType(type).runFFProbe(on: URL(fileURLWithPath: file.path)) { logMsg in
+                                listener.onLogMsg(logMsg)
+                            }
+                            
                             if md.filename == "/" ||  md.filename == "" {
                                 return
                             }
@@ -182,7 +185,7 @@ public class FFMpegXPCService: NSObject, FFMpegXPCServiceProtocol, @unchecked Se
         
         // 4. Batch complete
 //        listener.onCompleted(TaskResult(id: id, progress: 1.0, success: true))
-        listener.onLogMsg(LogMsg(msg: "Completed loading (\(totalCount)) media files ... You can now start to work with them.", type: .info))
+        listener.onLogMsg(LogMsg(msg: "Completed loading (\(totalCount)) media files ... You can now start to work with \(totalCount >= 2 ? "them" : "it").", type: .info))
 //        clientProxy.didLogMsg(msg: LogMsg(msg: "Completed loading (\(totalCount)) media files ... You can now start to work with them.", type: .info))
         reply(id, nil)
     }
@@ -870,7 +873,7 @@ public class FFMpegXPCService: NSObject, FFMpegXPCServiceProtocol, @unchecked Se
     }
     
     func getFFProbeForType(_ type: FFMpegResourceType) -> FFProbeProtocol {
-        if(type == .bundledBinaries){
+        if(type == .bundledBinaries || type == .homebrewBinaries){
             return FFProbeBinNG()
         }else{
             return FFProbeLibNG()
@@ -878,7 +881,7 @@ public class FFMpegXPCService: NSObject, FFMpegXPCServiceProtocol, @unchecked Se
     }
     
     func getFFMpegForType(_ type: FFMpegResourceType) -> FFMpegProtocol {
-        if(type == .bundledBinaries){
+        if(type == .bundledBinaries || type == .homebrewBinaries){
             return FFMpegBinNew()
         }else{
             return FFMpegLibNew()
