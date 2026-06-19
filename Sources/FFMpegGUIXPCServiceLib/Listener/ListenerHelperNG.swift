@@ -71,6 +71,27 @@ public class ListenerHelperNG {
         return iface
     }
     
+    public static func setImportTaskInterfaceSB(interface: NSXPCInterface) -> NSXPCInterface {
+        var iface = interface
+        let selector = #selector(
+            FFMpegXPCServiceProtocol.startImportTaskSB(taskConfig:listener:withReply:)
+        )
+
+        // 1. listener (argument 1) → remote object, use setInterface
+        iface.setInterface(
+            ListenerHelperNG.getImportProgressListenerInterface(),
+            for: selector,
+            argumentIndex: 1,
+            ofReply: false
+        )
+
+        iface = AAllowedClassesHelper.allowClassesForSelector(interface: iface, selector: selector, argumentIndex: 0, allowedObjects: NSSet(array: [
+            XPCServiceImportTaskConfigSB.self
+        ]))
+        
+        return iface
+    }
+    
     
     public static func getCheckIntegrityProgressListenerInterface() -> NSXPCInterface {
 

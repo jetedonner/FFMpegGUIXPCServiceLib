@@ -16,6 +16,17 @@ import FFMpegSwiftManagerLib
     func ping(withReply reply: @escaping () -> Void)
     func cancelTask(taskID: UUID, withReply reply: @escaping () -> Void)
     
+    // --------------------------------------------------------------------
+    // New With SANDBOX
+    func processVideo(bookmarkData: Data, completion: @escaping (Bool) -> Void)
+    
+    func processVideo2(at fileURL: URL, completion: @escaping (Bool) -> Void)
+    
+    func startImportTaskSB(taskConfig: XPCServiceImportTaskConfigSB, listener: ImportProgressListenerLib, withReply reply: @escaping @Sendable (UUID?, Error?) -> Void)
+    func observeImportProgressSB(taskID: UUID, withReply reply: @escaping (Double, Bool, Error?) -> Void)
+    
+    // --------------------------------------------------------------------
+    
     // IMPORT Functions
     func startImportTask(taskConfig: XPCServiceImportTaskConfig, listener: ImportProgressListenerLib, withReply reply: @escaping @Sendable (UUID?, Error?) -> Void)
     func observeImportProgress(taskID: UUID, withReply reply: @escaping (Double, Bool, Error?) -> Void)

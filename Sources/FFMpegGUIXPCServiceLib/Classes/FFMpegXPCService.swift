@@ -32,6 +32,323 @@ public class FFMpegXPCService: NSObject, FFMpegXPCServiceProtocol, @unchecked Se
         reply()
     }
     
+    
+    
+    public func processVideo2(at fileURL: URL, completion: @escaping (Bool) -> Void){
+     
+        // 2. Open the sandbox gate for the XPC service process
+        guard fileURL.startAccessingSecurityScopedResource() else {
+            print("❌ XPC Service failed to claim security scope.")
+            completion(false)
+            return
+        }
+        defer { fileURL.stopAccessingSecurityScopedResource() } // Clean up when finished
+        
+//            // 3. Run your FFmpeg setup safely inside the security container block
+//            var formatContext: UnsafeMutablePointer<AVFormatContext>? = nil
+//
+//            // 💡 Optimization Tip: Use filesystem representation for C libraries to avoid string encoding bugs
+//            let pathString = xpcScopedURL.withUnsafeFileSystemRepresentation { String(cString: $0!) }
+//            let resultCode = avformat_open_input(&formatContext, pathString, nil, nil)
+        
+//            var resultCode = 0
+//            guard resultCode == 0 else {
+//                print("❌ FFmpeg failed inside XPC: \(getFFmpegError(code: resultCode))")
+//                completion(false)
+//                return
+//            }
+        
+        // Process media files here...
+        completion(true)
+    }
+    
+//    @MainActor
+    public func processVideo(bookmarkData: Data, completion: @escaping (Bool) -> Void) {
+        var isStale = false
+        do {
+            let location = try URL(resolvingBookmarkData: bookmarkData, bookmarkDataIsStale: &isStale)
+          defer {
+            location.stopAccessingSecurityScopedResource()
+          }
+          // Use the resource at the location URL.
+//            Task { @MainActor in
+////                do {
+                    let md = FFProbeLibNG().runFFProbeSB(on: URL(fileURLWithPath: location.path)) { logMsg in
+//                        listener.onLogMsg(logMsg)
+                        print(logMsg.msg)
+                    }
+            print(md.filenameOnly)
+                completion(true)
+//                } catch {
+//                    print("Error getting FFProbe: \(error)")
+//                    completion(false)
+//                }
+//            }
+            return
+        }
+        catch let error {
+          // Handle any errors.
+//            completion(false)
+            print("Error resolving bookmark: \(error)")
+//            completion(false)
+        }
+        completion(false)
+        return
+        
+//        var isStale = false
+//        
+//        do {
+//            //  Converted to Swift 6.3 by Swiftify v6.3.25104 - https://swiftify.com/
+//            // Decode the Base64 bookmark data
+////            guard let decodedBookmark = Data(base64Encoded: bookmarkData, options: .ignoreUnknownCharacters) else { return }
+//            
+//            // 1. Resolve the main app's bookmark payload directly inside the XPC's sandbox context
+//            let xpcScopedURL = try URL(
+//                resolvingBookmarkData: bookmarkData,
+//                options: .withSecurityScope,
+//                relativeTo: nil,
+//                bookmarkDataIsStale: &isStale
+//            )
+//            
+//            // 2. Open the sandbox gate for the XPC service process
+//            guard xpcScopedURL.startAccessingSecurityScopedResource() else {
+//                print("❌ XPC Service failed to claim security scope.")
+//                completion(false)
+//                return
+//            }
+//            defer { xpcScopedURL.stopAccessingSecurityScopedResource() } // Clean up when finished
+//            
+////            // 3. Run your FFmpeg setup safely inside the security container block
+////            var formatContext: UnsafeMutablePointer<AVFormatContext>? = nil
+////            
+////            // 💡 Optimization Tip: Use filesystem representation for C libraries to avoid string encoding bugs
+////            let pathString = xpcScopedURL.withUnsafeFileSystemRepresentation { String(cString: $0!) }
+////            let resultCode = avformat_open_input(&formatContext, pathString, nil, nil)
+//            
+////            var resultCode = 0
+////            guard resultCode == 0 else {
+////                print("❌ FFmpeg failed inside XPC: \(getFFmpegError(code: resultCode))")
+////                completion(false)
+////                return
+////            }
+//            
+//            // Process media files here...
+//            completion(true)
+//            
+//        } catch {
+//            print("❌ XPC service bookmark resolution crash: \(error)")
+//            completion(false)
+//        }
+    }
+    
+    public func startImportTaskSB(taskConfig: XPCServiceImportTaskConfigSB, listener: ImportProgressListenerLib, withReply reply: @escaping @Sendable (UUID?, Error?) -> Void) {
+//    public func startImportTaskB(taskConfig: XPCServiceImportTaskConfigSB, listener: ImportProgressListenerLib, withReply reply: @escaping @Sendable (UUID?, Error?) -> Void){
+        
+        logger.info("startImportTask called")
+        
+        let id = taskConfig.id
+        
+        let task = Task {
+            do {
+                try await performImportSB(id: taskConfig.id, url: taskConfig.bookmarkData, listener: listener, maxConcurrent: taskConfig.maxConcurrent, type: taskConfig.ffmpegType, recurseIntoSubDirs: taskConfig.recurseIntoSubDirs, withReply: reply)
+            } catch {
+                if !(error is CancellationError) /*, let taskID = currentTaskID*/ {
+                    self.logger.error("Import task \(taskConfig.id.uuidString, privacy: .public) failed: \(error.localizedDescription, privacy: .public)")
+                    listener.onLogMsg(LogMsg(msg: "Import task \(taskConfig.id.uuidString) failed: \(error.localizedDescription)", type: .error))
+                }
+            }
+            self.queue.async {
+                self.tasks[id] = nil
+            }
+        }
+        
+        queue.async {
+            self.tasks[taskConfig.id] = task
+        }
+        
+        reply(taskConfig.id, nil)
+    }
+    
+    func performImportSB(id: UUID, url: Data, listener: ImportProgressListenerLib, maxConcurrent: Int = 1, type: FFMpegResourceType = .linkedLibraries, recurseIntoSubDirs: Bool = true, withReply reply: @escaping  (UUID?, Error?) -> Void) async throws {
+        
+        do {
+            
+            var isStale: Bool = false
+            
+            let location = try URL(resolvingBookmarkData: url, bookmarkDataIsStale: &isStale)
+          defer {
+            location.stopAccessingSecurityScopedResource()
+          }
+        let files = FileSystemManager.mediaFilesInPath(in: location, recurseIntoSubDirs: recurseIntoSubDirs)
+        let totalCount = files.count
+        
+        // Create a TaskGroup to handle concurrent processing
+        try await withThrowingTaskGroup(of: Void.self) { group in
+            var activeTasks = 0
+            var completedCount = 0
+            
+            if(files.count <= 0){
+                ImportProgressStore.shared.setProgress(1.0, for: id, done: true)
+            }else{
+                for file in files {
+                    if activeTasks >= maxConcurrent {
+                        _ = try await group.next()
+                        activeTasks -= 1
+                        completedCount += 1
+                        
+//                        listener.onProgress(ProgressUpdate(allCount: totalCount, current: completedCount))
+                        try Task.checkCancellation()
+                        let progress = Double(completedCount) / Double(totalCount)
+                        ImportProgressStore.shared.setProgress(progress, for: id, done: completedCount == totalCount)
+//                        clientProxy.didUpdateBatchImportProgress(id: id, progress: progress)
+                    }
+                    
+                    activeTasks += 1
+                    group.addTask {
+                        do {
+                            
+//                            var isStale: Bool = false
+//                            
+//                            let location = try URL(resolvingBookmarkData: bookmarkData, bookmarkDataIsStale: &isStale)
+//                          defer {
+//                            location.stopAccessingSecurityScopedResource()
+//                          }
+                          // Use the resource at the location URL.
+                //            Task { @MainActor in
+                ////                do {
+                            let md = FFProbeLibNG().runFFProbeSB(on: URL(fileURLWithPath: file.path)) { logMsg in
+                                listener.onLogMsg(logMsg)
+                            }
+                            print(md.filenameOnly)
+                            if md.filename == "/" ||  md.filename == "" {
+                                return
+                            }
+                            md.taskType = .importing
+                            listener.onImportedMedia(md)
+//                                completion(true)
+                //                } catch {
+                //                    print("Error getting FFProbe: \(error)")
+                //                    completion(false)
+                //                }
+                //            }
+//                            return
+                            
+//                            let md = try await self.getFFProbeForType(type).runFFProbe(on: URL(fileURLWithPath: file.path)) { logMsg in
+//                                listener.onLogMsg(logMsg)
+//                            }
+//                            
+//                            if md.filename == "/" ||  md.filename == "" {
+//                                return
+//                            }
+//                            md.taskType = .importing
+//                            listener.onImportedMedia(md)
+//                            clientProxy.didFindMedia(media: md)
+                            listener.onLogMsg(LogMsg(msg: "Loaded \(md.filename) for integrity check ...", type: .info))
+//                            clientProxy.didLogMsg(msg: LogMsg(msg: "Loaded \(md.filename) for integrity check ...", type: .info))
+                            await Task.yield()
+                            try await Task.sleep(nanoseconds: 100_000_000)
+                            listener.onMediaStateChanged(id: md.id, result: .validating)
+//                            clientProxy.didMediaStateChange(id: md.id, state: .validating)
+                            await Task.yield()
+                            try await Task.sleep(nanoseconds: 100_000_000)
+                            // 1. Change to a thread-safe LockedBox
+//                            let lastTimestamp = LockedBox(Date())
+//                            let res = try await self.getFFProbeForType(type).checkIntegrity(item: md) {  progress in
+//                                // 2. Safely check and update the timestamp atomically on the spot
+//                                let shouldUpdateProgress = lastTimestamp.mutate { lastTime -> Bool in
+//                                    let now = Date()
+//                                    if now.timeIntervalSince(lastTime) >= 0.1 {
+//                                        lastTime = now // Updates immediately, blocking the throttling flood
+//                                        return true
+//                                    }
+//                                    return false
+//                                }
+//
+//                                // 3. If the throttle check passed, dispatch the UI update to the MainActor
+//                                if shouldUpdateProgress || progress == 1.0 {
+////                                    Task { @MainActor in
+//                                        if md.taskType != .validated && md.taskType != .corrupted {
+//                                            listener.onSingleTaskProgress(id: md.id, progress: progress)
+////                                            clientProxy.didUpdateSingleImportProgress(id: md.id, progress: progress)
+//                                            try? await Task.sleep(nanoseconds: 10_000_000)
+//                                            await Task.yield()
+//                                        }
+////                                    }
+//                                }
+//                            }
+                            // 1. Change to a thread-safe LockedBox
+                            
+                            let lastTimestamp = LockedBox(Date())
+                            let res = FFProbeLibNG().checkIntegritySB(item: md) {  progress in //  try await self.getFFProbeForType(type).checkIntegrity(item: md) { progress in
+                                
+                                // 2. Safely check and update the timestamp atomically on the spot
+                                let shouldUpdateProgress = lastTimestamp.mutate { lastTime -> Bool in
+                                    let now = Date()
+                                    if now.timeIntervalSince(lastTime) >= 0.1 {
+                                        lastTime = now // Updates immediately, blocking the throttling flood
+                                        return true
+                                    }
+                                    return false
+                                }
+                                
+                                // 3. If the throttle check passed, dispatch the UI update
+                                if shouldUpdateProgress || progress == 1.0 {
+                                    if md.taskType != .validated && md.taskType != .corrupted {
+                                        
+                                        // This call is synchronous, keeping the outer closure happy
+                                        listener.onSingleTaskProgress(id: md.id, progress: progress)
+                                        
+                                        // ✅ FIXED: Removed try? await Task.sleep and await Task.yield()
+                                        // Your LockedBox throttle handles the frame-thrashing perfectly now.
+                                    }
+                                }
+                            }
+                            if(res != .success){
+                                listener.onMediaStateChanged(id: md.id, result: .corrupted)
+                                listener.onLogMsg(LogMsg(msg: "Failed to process \(file.path): \(res.description) > File is corrupted!", type: .error))
+                            }else{
+                                listener.onMediaStateChanged(id: md.id, result: .validated)
+                                listener.onLogMsg(LogMsg(msg: "Loaded media file \(file.path): \(res.description) ...", type: .info))
+//                                clientProxy.didLogMsg(msg: LogMsg(msg: "Loaded media file \(file.path): \(res.description) ...", type: .info))
+                            }
+                        } catch {
+                            print("Failed to process \(file.path): \(error)")
+                            listener.onLogMsg(LogMsg(msg: "Failed to process \(file.path): \(error)", type: .error))
+                        }
+                    }
+                }
+                
+                // 3. Drain the remaining tasks in the final batch
+                for try await _ in group {
+                    completedCount += 1
+                    listener.onBatchTaskProgress(id: id, progress: Double(completedCount / totalCount))  // )(completedCount, totalCount)
+                    try Task.checkCancellation()
+                    let progress = Double(completedCount) / Double(totalCount)
+                    ImportProgressStore.shared.setProgress(progress, for: id, done: completedCount == totalCount)
+                }
+            }
+        }
+        
+        // 4. Batch complete
+//        listener.onCompleted(TaskResult(id: id, progress: 1.0, success: true))
+        listener.onLogMsg(LogMsg(msg: "Completed loading (\(totalCount)) media files ... You can now start to work with \(totalCount >= 2 ? "them" : "it").", type: .info))
+//        clientProxy.didLogMsg(msg: LogMsg(msg: "Completed loading (\(totalCount)) media files ... You can now start to work with them.", type: .info))
+        } catch {
+            print("Failed to process ulr ...") // \(location.path): \(error)")
+            listener.onLogMsg(LogMsg(msg: "Failed to process  ulr ...", type: .error)) // \(location.path): \(error)", type: .error))
+        }
+        reply(id, nil)
+            
+    }
+    
+    public func observeImportProgressSB(taskID: UUID, withReply reply: @escaping (Double, Bool, Error?) -> Void) {
+        ImportProgressStore.shared.withProgress(for: taskID) { progress, done in
+            reply(progress, done, nil)
+        }
+    }
+    
+    // ---------------------------------------------------- END SB --------------------------------------------------------
+    
     public func startImportTask(taskConfig: XPCServiceImportTaskConfig, listener: ImportProgressListenerLib, withReply reply: @escaping @Sendable (UUID?, Error?) -> Void){
         
         logger.info("startImportTask called")
