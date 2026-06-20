@@ -191,6 +191,9 @@ public class FFMpegXPCService: NSObject, FFMpegXPCServiceProtocol, @unchecked Se
                 ImportProgressStore.shared.setProgress(1.0, for: id, done: true)
             }else{
                 for file in files {
+                    guard FileSecurityManager.isFileValidMedia(url: file) else {
+                        continue
+                    }
                     if activeTasks >= maxConcurrent {
                         _ = try await group.next()
                         activeTasks -= 1
