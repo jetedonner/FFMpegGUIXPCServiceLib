@@ -920,6 +920,8 @@ public class FFMpegXPCService: NSObject, FFMpegXPCServiceProtocol, @unchecked Se
         
         reply(id, nil)
     }
+    
+    
   
 //    var oldProgressOverAll = 0.0
     func performSanitation(id: UUID, md: [MediaDetails], listener: SanitizerProgressListenerLib, maxConcurrent: Int = 1, type: FFMpegResourceType = .linkedLibraries, withReply reply: @escaping (UUID?, Error?) -> Void) async throws {
@@ -1207,4 +1209,14 @@ public class FFMpegXPCService: NSObject, FFMpegXPCServiceProtocol, @unchecked Se
             return FFMpegLibNew()
         }
     }
+    
+///// Global wrapper that bridges the raw C callback block to your Swift instance
+//    private let ffmpegInterruptCallback: @convention(c) (UnsafeMutableRawPointer?) -> Int32 = { opaque in
+//        guard let opaquePointer = opaque else { return 0 }
+//        
+//        // Reconstruct the Swift class instance without taking ownership of its memory
+//        let context = Unmanaged<FFmpegInterruptContext>.fromOpaque(opaquePointer).takeUnretainedValue()
+//        
+//        return context.checkStatus()
+//    }
 }
