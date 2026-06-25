@@ -15,6 +15,7 @@ import FFMpegSwiftManagerLib
 public class FFMpegXPCService: NSObject, FFMpegXPCServiceProtocol, @unchecked Sendable {
     
     weak var connection: NSXPCConnection?
+    private var configMgr: ConfigMgrNew?
     
     private var cnt: Int = 0
     
@@ -32,119 +33,11 @@ public class FFMpegXPCService: NSObject, FFMpegXPCServiceProtocol, @unchecked Se
         reply()
     }
     
-    
-    
-    public func processVideo2(at fileURL: URL, completion: @escaping (Bool) -> Void){
-     
-        // 2. Open the sandbox gate for the XPC service process
-        guard fileURL.startAccessingSecurityScopedResource() else {
-            print("❌ XPC Service failed to claim security scope.")
-            completion(false)
-            return
-        }
-        defer { fileURL.stopAccessingSecurityScopedResource() } // Clean up when finished
-        
-//            // 3. Run your FFmpeg setup safely inside the security container block
-//            var formatContext: UnsafeMutablePointer<AVFormatContext>? = nil
-//
-//            // 💡 Optimization Tip: Use filesystem representation for C libraries to avoid string encoding bugs
-//            let pathString = xpcScopedURL.withUnsafeFileSystemRepresentation { String(cString: $0!) }
-//            let resultCode = avformat_open_input(&formatContext, pathString, nil, nil)
-        
-//            var resultCode = 0
-//            guard resultCode == 0 else {
-//                print("❌ FFmpeg failed inside XPC: \(getFFmpegError(code: resultCode))")
-//                completion(false)
-//                return
-//            }
-        
-        // Process media files here...
-        completion(true)
-    }
-    
-//    @MainActor
-    public func processVideo(bookmarkData: Data, completion: @escaping (Bool) -> Void) {
-        var isStale = false
-        do {
-            let location = try URL(resolvingBookmarkData: bookmarkData, bookmarkDataIsStale: &isStale)
-          defer {
-            location.stopAccessingSecurityScopedResource()
-          }
-          // Use the resource at the location URL.
-//            Task { @MainActor in
-////                do {
-                    let md = FFProbeLibNG().runFFProbeSB(on: URL(fileURLWithPath: location.path)) { logMsg in
-//                        listener.onLogMsg(logMsg)
-                        print(logMsg.msg)
-                    }
-            print(md.filenameOnly)
-                completion(true)
-//                } catch {
-//                    print("Error getting FFProbe: \(error)")
-//                    completion(false)
-//                }
-//            }
-            return
-        }
-        catch let error {
-          // Handle any errors.
-//            completion(false)
-            print("Error resolving bookmark: \(error)")
-//            completion(false)
-        }
-        completion(false)
-        return
-        
-//        var isStale = false
-//        
-//        do {
-//            //  Converted to Swift 6.3 by Swiftify v6.3.25104 - https://swiftify.com/
-//            // Decode the Base64 bookmark data
-////            guard let decodedBookmark = Data(base64Encoded: bookmarkData, options: .ignoreUnknownCharacters) else { return }
-//            
-//            // 1. Resolve the main app's bookmark payload directly inside the XPC's sandbox context
-//            let xpcScopedURL = try URL(
-//                resolvingBookmarkData: bookmarkData,
-//                options: .withSecurityScope,
-//                relativeTo: nil,
-//                bookmarkDataIsStale: &isStale
-//            )
-//            
-//            // 2. Open the sandbox gate for the XPC service process
-//            guard xpcScopedURL.startAccessingSecurityScopedResource() else {
-//                print("❌ XPC Service failed to claim security scope.")
-//                completion(false)
-//                return
-//            }
-//            defer { xpcScopedURL.stopAccessingSecurityScopedResource() } // Clean up when finished
-//            
-////            // 3. Run your FFmpeg setup safely inside the security container block
-////            var formatContext: UnsafeMutablePointer<AVFormatContext>? = nil
-////            
-////            // 💡 Optimization Tip: Use filesystem representation for C libraries to avoid string encoding bugs
-////            let pathString = xpcScopedURL.withUnsafeFileSystemRepresentation { String(cString: $0!) }
-////            let resultCode = avformat_open_input(&formatContext, pathString, nil, nil)
-//            
-////            var resultCode = 0
-////            guard resultCode == 0 else {
-////                print("❌ FFmpeg failed inside XPC: \(getFFmpegError(code: resultCode))")
-////                completion(false)
-////                return
-////            }
-//            
-//            // Process media files here...
-//            completion(true)
-//            
-//        } catch {
-//            print("❌ XPC service bookmark resolution crash: \(error)")
-//            completion(false)
-//        }
-    }
-    
     public func startImportTaskSB(taskConfig: XPCServiceImportTaskConfigSB, listener: ImportProgressListenerLib, withReply reply: @escaping @Sendable (UUID?, Error?) -> Void) {
         
         logger.info("startImportTask called")
         
+        self.configMgr = taskConfig.configMgr
         let id = taskConfig.id
         
         let task = Task {
@@ -178,7 +71,7 @@ public class FFMpegXPCService: NSObject, FFMpegXPCServiceProtocol, @unchecked Se
           defer {
             location.stopAccessingSecurityScopedResource()
           }
-        let files = FilesystemManager.mediaFilesInPath(in: location, recurseIntoSubDirs: recurseIntoSubDirs)
+            let files = FilesystemManager.mediaFilesInPath(in: location, recurseIntoSubDirs: recurseIntoSubDirs, configMgr: self.configMgr ?? .shared)
         let totalCount = files.count
         
         // Create a TaskGroup to handle concurrent processing
@@ -369,7 +262,9 @@ public class FFMpegXPCService: NSObject, FFMpegXPCServiceProtocol, @unchecked Se
         
         logger.info("startIntegrityCheckTask called")
         
-        let id = UUID()
+        self.configMgr = taskConfig.configMgr
+        
+        let id = taskConfig.id
         
         let task = Task {
             do {
@@ -528,7 +423,9 @@ public class FFMpegXPCService: NSObject, FFMpegXPCServiceProtocol, @unchecked Se
     public func startConversionTaskSB(md: [MediaDetails], taskConfig: XPCServiceConversionTaskConfigSB, listener: ConversionProgressListenerLib, withReply reply: @escaping @Sendable (UUID?, Error?) -> Void) {
         logger.info("startConvertTask called")
         
-        let id = UUID()
+        self.configMgr = taskConfig.configMgr
+        
+        let id = taskConfig.id
         
         let task = Task {
             do {
@@ -779,7 +676,9 @@ public class FFMpegXPCService: NSObject, FFMpegXPCServiceProtocol, @unchecked Se
 //        reply(id, nil)
         logger.info("startSanitizerTask called")
         
-        let id = UUID()
+        self.configMgr = taskConfig.configMgr
+        
+        let id = taskConfig.id
         
         let task = Task {
             do {
