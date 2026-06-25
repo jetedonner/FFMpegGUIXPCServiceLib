@@ -27,6 +27,8 @@ import FFMpegSwiftManagerLib
     
     func startIntegrityCheckTaskSB(md: [MediaDetails], taskConfig: XPCServiceIntegrityCheckTaskConfigSB, listener: IntegrityCheckProgressListenerLib, withReply reply: @escaping @Sendable (UUID?, Error?) -> Void)
     
+    func startConversionTaskSB(md: [MediaDetails], taskConfig: XPCServiceConversionTaskConfigSB, listener: ConversionProgressListenerLib,  withReply reply: @escaping @Sendable (UUID?, Error?) -> Void)
+    
     // --------------------------------------------------------------------
     
     // IMPORT Functions
