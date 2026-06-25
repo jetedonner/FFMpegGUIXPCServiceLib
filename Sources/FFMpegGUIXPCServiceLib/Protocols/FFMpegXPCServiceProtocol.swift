@@ -44,6 +44,6 @@ import FFMpegSwiftManagerLib
     func observeConversionProgress(taskID: UUID, withReply reply: @escaping (Double, Bool, Error?) -> Void)
     
     // SANITATION Functions
-    func startSanitationTask(md: [MediaDetails], taskConfig: XPCServiceSanitazionTaskConfig, listener: SanitizerProgressListenerLib, withReply reply: @escaping @Sendable (UUID?, Error?) -> Void)
+    func startSanitationTaskSB(md: [MediaDetails], taskConfig: XPCServiceSanitazionTaskConfigSB, listener: SanitizerProgressListenerLib, withReply reply: @escaping @Sendable (UUID?, Error?) -> Void)
     func observeSanitationProgress(taskID: UUID, withReply reply: @escaping (Double, Bool, Error?) -> Void)
 }

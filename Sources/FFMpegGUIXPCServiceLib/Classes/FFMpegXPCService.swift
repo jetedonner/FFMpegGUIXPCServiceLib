@@ -752,7 +752,7 @@ public class FFMpegXPCService: NSObject, FFMpegXPCServiceProtocol, @unchecked Se
         }
     }
     
-    public func startSanitationTask(md: [MediaDetails], taskConfig: XPCServiceSanitazionTaskConfig, listener: SanitizerProgressListenerLib, withReply reply: @escaping @Sendable (UUID?, Error?) -> Void) {
+    public func startSanitationTaskSB(md: [MediaDetails], taskConfig: XPCServiceSanitazionTaskConfigSB, listener: SanitizerProgressListenerLib, withReply reply: @escaping @Sendable (UUID?, Error?) -> Void) {
 //        logger.info("startConvertTask called")
 //        
 //        let id = UUID()
@@ -783,7 +783,7 @@ public class FFMpegXPCService: NSObject, FFMpegXPCServiceProtocol, @unchecked Se
         
         let task = Task {
             do {
-                try await performSanitation(id: id, md: md, listener: listener, maxConcurrent: 1, withReply: reply)
+                try await performSanitationSB(id: id, md: md, bookmarkData: taskConfig.bookmarkData, listener: listener, maxConcurrent: 1, withReply: reply)
             } catch {
                 if !(error is CancellationError) /*, let taskID = currentTaskID*/ {
                     self.logger.error("Sanitization task \(id.uuidString, privacy: .public) failed: \(error.localizedDescription, privacy: .public)")
@@ -806,7 +806,7 @@ public class FFMpegXPCService: NSObject, FFMpegXPCServiceProtocol, @unchecked Se
     
   
 //    var oldProgressOverAll = 0.0
-    func performSanitation(id: UUID, md: [MediaDetails], listener: SanitizerProgressListenerLib, maxConcurrent: Int = 1, type: FFMpegResourceType = .linkedLibraries, withReply reply: @escaping (UUID?, Error?) -> Void) async throws {
+    func performSanitationSB(id: UUID, md: [MediaDetails], bookmarkData: Data, listener: SanitizerProgressListenerLib, maxConcurrent: Int = 1, type: FFMpegResourceType = .linkedLibraries, withReply reply: @escaping (UUID?, Error?) -> Void) async throws {
         self.oldProgressOverAll = 0.0
 //        let files = FileSystemManager.mediaFilesInPath(in: URL(fileURLWithPath: url))
         let totalCount = md.count
@@ -815,6 +815,14 @@ public class FFMpegXPCService: NSObject, FFMpegXPCServiceProtocol, @unchecked Se
 //        let id = UUID()
         // Create a TaskGroup to handle concurrent processing
 //        var isUpdating: Bool = false
+        
+        var isStale: Bool = false
+        
+        let location = try URL(resolvingBookmarkData: bookmarkData, bookmarkDataIsStale: &isStale)
+        location.startAccessingSecurityScopedResource()
+      defer {
+        location.stopAccessingSecurityScopedResource()
+      }
         
         try await withThrowingTaskGroup(of: Void.self) { group in
             var activeTasks = 0
@@ -846,7 +854,10 @@ public class FFMpegXPCService: NSObject, FFMpegXPCServiceProtocol, @unchecked Se
                             await Task.yield()
                             try await Task.sleep(nanoseconds: 100_000_000)
                             
-                            let res = await FFMpegMedicLib().sanitizeMediaFile(md: md.first!, progress: { progress, _, _ in
+                            var locBase = location
+                            md.first!.fileURLSB = locBase.appending(path: md.first!.filenameOnly)
+                            
+                            let res = await FFMpegMedicLib().sanitizeMediaFileSB(md: md.first!, progress: { progress, _, _ in
                                 listener.onLogMsg(LogMsg(msg: "Sanitize file: \(file.filenameOnly) => \(String(format: "%.2f", (progress * 100)))%"))
                                 listener.onSingleTaskProgress(id: md.first!.id, progress: progress)
                                 SanitationProgressStore.shared.setProgress(progress, for: id, done: false /*currentDuration == totalDuration*/)

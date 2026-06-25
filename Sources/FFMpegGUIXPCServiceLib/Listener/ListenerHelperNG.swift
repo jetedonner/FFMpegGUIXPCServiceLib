@@ -216,11 +216,11 @@ public class ListenerHelperNG {
         return listenerInterface
     }
     
-    public static func setSanitationTaskInterface(interface: NSXPCInterface) -> NSXPCInterface {
+    public static func setSanitationTaskInterfaceSB(interface: NSXPCInterface) -> NSXPCInterface {
         
         var iface = interface
         let selector = #selector(
-            FFMpegXPCServiceProtocol.startSanitationTask(md:taskConfig:listener:withReply:)
+            FFMpegXPCServiceProtocol.startSanitationTaskSB(md:taskConfig:listener:withReply:)
         )
         
         iface.setInterface(
@@ -236,7 +236,7 @@ public class ListenerHelperNG {
         ]))
         
         iface = AllowedClassesHelper.allowClassesForSelector(interface: iface, selector: selector, argumentIndex: 1, allowedObjects: NSSet(array: [
-            XPCServiceSanitazionTaskConfig.self
+            XPCServiceSanitazionTaskConfigSB.self
         ]))
         
         return iface
