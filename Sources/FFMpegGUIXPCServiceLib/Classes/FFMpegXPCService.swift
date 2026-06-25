@@ -538,7 +538,10 @@ public class FFMpegXPCService: NSObject, FFMpegXPCServiceProtocol, @unchecked Se
                     self.logger.error("Import task \(id.uuidString, privacy: .public) failed: \(error.localizedDescription, privacy: .public)")
                     print("Import task \(id.uuidString) failed: \(error.localizedDescription)")
 //                    listener.onLogMsg(LogMsg(msg: "Import task \(id.uuidString) failed: \(error.localizedDescription)"))
-                }
+                }/*else{
+                    let notCompleted = md.filter({$0.taskType == .converting && $0.progress < 1.0})
+                    notCompleted.forEach({listener.onMediaStateChanged(id: $0.id, result: .cancelled)})
+                }*/
             }
             self.queue.async {
                 self.tasks[id] = nil
@@ -590,7 +593,11 @@ public class FFMpegXPCService: NSObject, FFMpegXPCServiceProtocol, @unchecked Se
                         
                         // Safe to report overall batch progress here
 //                        listener.onProgress(ProgressUpdate(allCount: totalCount, current: completedCount)) //  completedCount, totalCount)
-                        try Task.checkCancellation()
+                        if Task.isCancelled {
+//                            listener.onMediaStateChanged(id: file.id, result: .cancelled)
+                            try Task.checkCancellation()
+                        }
+                        
                         let progress = Double(completedCount) / Double(totalCount)
                         ConversionProgressStore.shared.setProgress(progress, for: id, done: completedCount == totalCount)
 //                        listener.onMediaStateChanged(id: file.id, result: .converting)
@@ -701,7 +708,8 @@ public class FFMpegXPCService: NSObject, FFMpegXPCServiceProtocol, @unchecked Se
 //                        ConversionSingleMediaProgressStore.shared.setProgress(1.0, for: file.id, done: true)
                         } catch {
                             print("Failed to process \(file.filename): \(error)")
-                            file.taskType = .cancelled
+//                            file.taskType = .cancelled
+                            listener.onMediaStateChanged(id: file.id, result: .cancelled)
 //                            listener.onLogMsg(LogMsg(msg: "Failed to process \(file.filename): \(error)", type: .error))
                         }
                     }
@@ -716,6 +724,10 @@ public class FFMpegXPCService: NSObject, FFMpegXPCServiceProtocol, @unchecked Se
                     //                    }
                     
                     try Task.checkCancellation()
+//                    if Task.isCancelled {
+//                        listener.onMediaStateChanged(id: file.id, result: .cancelled)
+//                        try Task.checkCancellation()
+//                    }
                     if completedCount == totalCount {
                         //                        listener.onMediaStateChanged(id: file.id, result: .converting)
                         let progress = 1.0 // Double(completedCount) / Double(totalCount) >>> Do we need it???
