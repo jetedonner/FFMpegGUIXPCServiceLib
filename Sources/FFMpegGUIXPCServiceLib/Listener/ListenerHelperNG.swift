@@ -19,31 +19,31 @@ public class ListenerHelperNG {
         
         var listenerInterface = NSXPCInterface(with: ImportProgressListenerLib.self)
 
-        listenerInterface = AAllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(ImportProgressListenerLib.onLogMsg(_:)), argumentIndex: 0, allowedObjects: NSSet(array: [
+        listenerInterface = AllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(ImportProgressListenerLib.onLogMsg(_:)), argumentIndex: 0, allowedObjects: NSSet(array: [
             LogMsg.self
         ]))
         
-        listenerInterface = AAllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(ImportProgressListenerLib.onCompleted(_:)), argumentIndex: 0, allowedObjects: NSSet(array: [
+        listenerInterface = AllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(ImportProgressListenerLib.onCompleted(_:)), argumentIndex: 0, allowedObjects: NSSet(array: [
             TaskResult.self
         ]))
         
-        listenerInterface = AAllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(ImportProgressListenerLib.onImportedMedia(_:)), argumentIndex: 0, allowedObjects: NSSet(array: [
+        listenerInterface = AllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(ImportProgressListenerLib.onImportedMedia(_:)), argumentIndex: 0, allowedObjects: NSSet(array: [
             MediaDetails.self
         ]))
         
-        listenerInterface = AAllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(ImportProgressListenerLib.onBatchTaskProgress(id:progress:)), argumentIndex: 0, allowedObjects: NSSet(array: [
+        listenerInterface = AllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(ImportProgressListenerLib.onBatchTaskProgress(id:progress:)), argumentIndex: 0, allowedObjects: NSSet(array: [
             NSUUID.self
         ]))
         
-        listenerInterface = AAllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(ImportProgressListenerLib.onSingleTaskProgress(id:progress:)), argumentIndex: 0, allowedObjects: NSSet(array: [
+        listenerInterface = AllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(ImportProgressListenerLib.onSingleTaskProgress(id:progress:)), argumentIndex: 0, allowedObjects: NSSet(array: [
             NSUUID.self
         ]))
         
         
-        listenerInterface = AAllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(ImportProgressListenerLib.onMediaStateChanged(id:result:)), argumentIndex: 0, allowedObjects: NSSet(array: [
+        listenerInterface = AllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(ImportProgressListenerLib.onMediaStateChanged(id:result:)), argumentIndex: 0, allowedObjects: NSSet(array: [
             NSUUID.self
         ]))
-        listenerInterface = AAllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(ImportProgressListenerLib.onMediaStateChanged(id:result:)), argumentIndex: 1, allowedObjects: NSSet(array: [
+        listenerInterface = AllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(ImportProgressListenerLib.onMediaStateChanged(id:result:)), argumentIndex: 1, allowedObjects: NSSet(array: [
             TaskTypeBase.self
         ]))
         
@@ -64,7 +64,7 @@ public class ListenerHelperNG {
             ofReply: false
         )
 
-        iface = AAllowedClassesHelper.allowClassesForSelector(interface: iface, selector: selector, argumentIndex: 0, allowedObjects: NSSet(array: [
+        iface = AllowedClassesHelper.allowClassesForSelector(interface: iface, selector: selector, argumentIndex: 0, allowedObjects: NSSet(array: [
             XPCServiceImportTaskConfig.self
         ]))
         
@@ -85,7 +85,7 @@ public class ListenerHelperNG {
             ofReply: false
         )
 
-        iface = AAllowedClassesHelper.allowClassesForSelector(interface: iface, selector: selector, argumentIndex: 0, allowedObjects: NSSet(array: [
+        iface = AllowedClassesHelper.allowClassesForSelector(interface: iface, selector: selector, argumentIndex: 0, allowedObjects: NSSet(array: [
             XPCServiceImportTaskConfigSB.self
         ]))
         
@@ -97,11 +97,11 @@ public class ListenerHelperNG {
 
         var listenerInterface = NSXPCInterface(with: ImportProgressListenerLib.self)
 
-        listenerInterface = AAllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(IntegrityCheckProgressListenerLib.onLogMsg(_:)), argumentIndex: 0, allowedObjects: NSSet(array: [
+        listenerInterface = AllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(IntegrityCheckProgressListenerLib.onLogMsg(_:)), argumentIndex: 0, allowedObjects: NSSet(array: [
             LogMsg.self
         ]))
         
-        listenerInterface = AAllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(IntegrityCheckProgressListenerLib.onCompleted(_:)), argumentIndex: 0, allowedObjects: NSSet(array: [
+        listenerInterface = AllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(IntegrityCheckProgressListenerLib.onCompleted(_:)), argumentIndex: 0, allowedObjects: NSSet(array: [
             TaskResult.self
         ]))
         
@@ -109,19 +109,19 @@ public class ListenerHelperNG {
 //            MediaDetails.self
 //        ]))
         
-        listenerInterface = AAllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(IntegrityCheckProgressListenerLib.onBatchTaskProgress(id:progress:)), argumentIndex: 0, allowedObjects: NSSet(array: [
+        listenerInterface = AllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(IntegrityCheckProgressListenerLib.onBatchTaskProgress(id:progress:)), argumentIndex: 0, allowedObjects: NSSet(array: [
             NSUUID.self
         ]))
         
-        listenerInterface = AAllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(IntegrityCheckProgressListenerLib.onSingleTaskProgress(id:progress:)), argumentIndex: 0, allowedObjects: NSSet(array: [
+        listenerInterface = AllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(IntegrityCheckProgressListenerLib.onSingleTaskProgress(id:progress:)), argumentIndex: 0, allowedObjects: NSSet(array: [
             NSUUID.self
         ]))
         
         
-        listenerInterface = AAllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(IntegrityCheckProgressListenerLib.onMediaStateChanged(id:result:)), argumentIndex: 0, allowedObjects: NSSet(array: [
+        listenerInterface = AllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(IntegrityCheckProgressListenerLib.onMediaStateChanged(id:result:)), argumentIndex: 0, allowedObjects: NSSet(array: [
             NSUUID.self
         ]))
-        listenerInterface = AAllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(IntegrityCheckProgressListenerLib.onMediaStateChanged(id:result:)), argumentIndex: 1, allowedObjects: NSSet(array: [
+        listenerInterface = AllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(IntegrityCheckProgressListenerLib.onMediaStateChanged(id:result:)), argumentIndex: 1, allowedObjects: NSSet(array: [
             TaskTypeBase.self
         ]))
         
@@ -141,13 +141,38 @@ public class ListenerHelperNG {
             ofReply: false
         )
         
-        iface = AAllowedClassesHelper.allowClassesForSelector(interface: iface, selector: selector, argumentIndex: 0, allowedObjects: NSSet(array: [
+        iface = AllowedClassesHelper.allowClassesForSelector(interface: iface, selector: selector, argumentIndex: 0, allowedObjects: NSSet(array: [
             NSArray.self,
             MediaDetails.self
         ]))
         
-        iface = AAllowedClassesHelper.allowClassesForSelector(interface: iface, selector: selector, argumentIndex: 1, allowedObjects: NSSet(array: [
+        iface = AllowedClassesHelper.allowClassesForSelector(interface: iface, selector: selector, argumentIndex: 1, allowedObjects: NSSet(array: [
             XPCServiceIntegrityCheckTaskConfig.self
+        ]))
+        
+        return iface
+    }
+    
+    public static func setCheckIntegrityTaskInterfaceSB(interface: NSXPCInterface) -> NSXPCInterface {
+        var iface = interface
+        let selector = #selector(
+            FFMpegXPCServiceProtocol.startIntegrityCheckTaskSB(md:taskConfig:listener:withReply:) //(
+        )
+        
+        iface.setInterface(
+            ListenerHelperNG.getCheckIntegrityProgressListenerInterface(),
+            for: selector,
+            argumentIndex: 2,
+            ofReply: false
+        )
+        
+        iface = AllowedClassesHelper.allowClassesForSelector(interface: iface, selector: selector, argumentIndex: 0, allowedObjects: NSSet(array: [
+            NSArray.self,
+            MediaDetails.self
+        ]))
+        
+        iface = AllowedClassesHelper.allowClassesForSelector(interface: iface, selector: selector, argumentIndex: 1, allowedObjects: NSSet(array: [
+            XPCServiceIntegrityCheckTaskConfigSB.self
         ]))
         
         return iface
@@ -157,27 +182,27 @@ public class ListenerHelperNG {
         
         var listenerInterface = NSXPCInterface(with: ConversionProgressListenerLib.self)
         
-        listenerInterface = AAllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(ConversionProgressListenerLib.onLogMsg(_:)), argumentIndex: 0, allowedObjects: NSSet(array: [
+        listenerInterface = AllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(ConversionProgressListenerLib.onLogMsg(_:)), argumentIndex: 0, allowedObjects: NSSet(array: [
             LogMsg.self
         ]))
         
-        listenerInterface = AAllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(ConversionProgressListenerLib.onCompleted(_:)), argumentIndex: 0, allowedObjects: NSSet(array: [
+        listenerInterface = AllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(ConversionProgressListenerLib.onCompleted(_:)), argumentIndex: 0, allowedObjects: NSSet(array: [
             TaskResult.self
         ]))
         
-        listenerInterface = AAllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(ConversionProgressListenerLib.onBatchTaskProgress(id:progress:)), argumentIndex: 0, allowedObjects: NSSet(array: [
+        listenerInterface = AllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(ConversionProgressListenerLib.onBatchTaskProgress(id:progress:)), argumentIndex: 0, allowedObjects: NSSet(array: [
             NSUUID.self
         ]))
         
-        listenerInterface = AAllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(ConversionProgressListenerLib.onSingleTaskProgress(id:progress:)), argumentIndex: 0, allowedObjects: NSSet(array: [
+        listenerInterface = AllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(ConversionProgressListenerLib.onSingleTaskProgress(id:progress:)), argumentIndex: 0, allowedObjects: NSSet(array: [
             NSUUID.self
         ]))
         
         
-        listenerInterface = AAllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(ConversionProgressListenerLib.onMediaStateChanged(id:result:)), argumentIndex: 0, allowedObjects: NSSet(array: [
+        listenerInterface = AllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(ConversionProgressListenerLib.onMediaStateChanged(id:result:)), argumentIndex: 0, allowedObjects: NSSet(array: [
             NSUUID.self
         ]))
-        listenerInterface = AAllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(ConversionProgressListenerLib.onMediaStateChanged(id:result:)), argumentIndex: 1, allowedObjects: NSSet(array: [
+        listenerInterface = AllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(ConversionProgressListenerLib.onMediaStateChanged(id:result:)), argumentIndex: 1, allowedObjects: NSSet(array: [
             TaskTypeBase.self
         ]))
         
@@ -198,12 +223,12 @@ public class ListenerHelperNG {
             ofReply: false
         )
         
-        iface = AAllowedClassesHelper.allowClassesForSelector(interface: iface, selector: selector, argumentIndex: 0, allowedObjects: NSSet(array: [
+        iface = AllowedClassesHelper.allowClassesForSelector(interface: iface, selector: selector, argumentIndex: 0, allowedObjects: NSSet(array: [
             NSArray.self,
             MediaDetails.self
         ]))
         
-        iface = AAllowedClassesHelper.allowClassesForSelector(interface: iface, selector: selector, argumentIndex: 1, allowedObjects: NSSet(array: [
+        iface = AllowedClassesHelper.allowClassesForSelector(interface: iface, selector: selector, argumentIndex: 1, allowedObjects: NSSet(array: [
             XPCServiceConversionTaskConfig.self
         ]))
         
@@ -214,27 +239,27 @@ public class ListenerHelperNG {
         
         var listenerInterface = NSXPCInterface(with: SanitizerProgressListenerLib.self)
         
-        listenerInterface = AAllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(SanitizerProgressListenerLib.onLogMsg(_:)), argumentIndex: 0, allowedObjects: NSSet(array: [
+        listenerInterface = AllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(SanitizerProgressListenerLib.onLogMsg(_:)), argumentIndex: 0, allowedObjects: NSSet(array: [
             LogMsg.self
         ]))
         
-        listenerInterface = AAllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(SanitizerProgressListenerLib.onCompleted(_:)), argumentIndex: 0, allowedObjects: NSSet(array: [
+        listenerInterface = AllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(SanitizerProgressListenerLib.onCompleted(_:)), argumentIndex: 0, allowedObjects: NSSet(array: [
             TaskResult.self
         ]))
         
-        listenerInterface = AAllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(SanitizerProgressListenerLib.onBatchTaskProgress(id:progress:)), argumentIndex: 0, allowedObjects: NSSet(array: [
+        listenerInterface = AllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(SanitizerProgressListenerLib.onBatchTaskProgress(id:progress:)), argumentIndex: 0, allowedObjects: NSSet(array: [
             NSUUID.self
         ]))
         
-        listenerInterface = AAllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(SanitizerProgressListenerLib.onSingleTaskProgress(id:progress:)), argumentIndex: 0, allowedObjects: NSSet(array: [
+        listenerInterface = AllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(SanitizerProgressListenerLib.onSingleTaskProgress(id:progress:)), argumentIndex: 0, allowedObjects: NSSet(array: [
             NSUUID.self
         ]))
         
         
-        listenerInterface = AAllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(SanitizerProgressListenerLib.onMediaStateChanged(id:result:)), argumentIndex: 0, allowedObjects: NSSet(array: [
+        listenerInterface = AllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(SanitizerProgressListenerLib.onMediaStateChanged(id:result:)), argumentIndex: 0, allowedObjects: NSSet(array: [
             NSUUID.self
         ]))
-        listenerInterface = AAllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(SanitizerProgressListenerLib.onMediaStateChanged(id:result:)), argumentIndex: 1, allowedObjects: NSSet(array: [
+        listenerInterface = AllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(SanitizerProgressListenerLib.onMediaStateChanged(id:result:)), argumentIndex: 1, allowedObjects: NSSet(array: [
             TaskTypeBase.self
         ]))
         
@@ -255,12 +280,12 @@ public class ListenerHelperNG {
             ofReply: false
         )
         
-        iface = AAllowedClassesHelper.allowClassesForSelector(interface: iface, selector: selector, argumentIndex: 0, allowedObjects: NSSet(array: [
+        iface = AllowedClassesHelper.allowClassesForSelector(interface: iface, selector: selector, argumentIndex: 0, allowedObjects: NSSet(array: [
             NSArray.self,
             MediaDetails.self
         ]))
         
-        iface = AAllowedClassesHelper.allowClassesForSelector(interface: iface, selector: selector, argumentIndex: 1, allowedObjects: NSSet(array: [
+        iface = AllowedClassesHelper.allowClassesForSelector(interface: iface, selector: selector, argumentIndex: 1, allowedObjects: NSSet(array: [
             XPCServiceSanitazionTaskConfig.self
         ]))
         

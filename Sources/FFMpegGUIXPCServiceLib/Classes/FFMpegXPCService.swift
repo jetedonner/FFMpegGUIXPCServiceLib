@@ -179,7 +179,7 @@ public class FFMpegXPCService: NSObject, FFMpegXPCServiceProtocol, @unchecked Se
           defer {
             location.stopAccessingSecurityScopedResource()
           }
-        let files = FileSystemManager.mediaFilesInPath(in: location, recurseIntoSubDirs: recurseIntoSubDirs)
+        let files = FilesystemManager.mediaFilesInPath(in: location, recurseIntoSubDirs: recurseIntoSubDirs)
         let totalCount = files.count
         
         // Create a TaskGroup to handle concurrent processing
@@ -381,7 +381,7 @@ public class FFMpegXPCService: NSObject, FFMpegXPCServiceProtocol, @unchecked Se
     
     func performImport(id: UUID, url: String, listener: ImportProgressListenerLib, maxConcurrent: Int = 1, type: FFMpegResourceType = .linkedLibraries, recurseIntoSubDirs: Bool = true, withReply reply: @escaping  (UUID?, Error?) -> Void) async throws {
         
-        let files = FileSystemManager.mediaFilesInPath(in: URL(fileURLWithPath: url), recurseIntoSubDirs: recurseIntoSubDirs)
+        let files = FilesystemManager.mediaFilesInPath(in: URL(fileURLWithPath: url), recurseIntoSubDirs: recurseIntoSubDirs)
         let totalCount = files.count
         
         // Create a TaskGroup to handle concurrent processing
@@ -668,6 +668,166 @@ public class FFMpegXPCService: NSObject, FFMpegXPCServiceProtocol, @unchecked Se
             reply(progress, done, nil)
         }
     }
+    
+    // --------------------------------- SB START --------------------------------
+    
+    public func startIntegrityCheckTaskSB(md: [MediaDetails], taskConfig: XPCServiceIntegrityCheckTaskConfigSB, listener: IntegrityCheckProgressListenerLib, withReply reply: @escaping @Sendable (UUID?, Error?) -> Void)  /*-> ConversionResult*/{
+        
+        logger.info("startIntegrityCheckTask called")
+        
+        let id = UUID()
+        
+        let task = Task {
+            do {
+//                try await performConversion(id: id, md: md, listener: listener, maxConcurrent: 5, type: type, withReply: reply)
+                try await self.performIntegrityCheckSB(id: id, md: md, bookmarkData: taskConfig.bookmarkData, listener: listener, type: taskConfig.ffmpegType, withReply: reply)
+            } catch {
+                if !(error is CancellationError) /*, let taskID = currentTaskID*/ {
+                    self.logger.error("IntegrityCheck task \(id.uuidString, privacy: .public) failed: \(error.localizedDescription, privacy: .public)")
+                    print("IntegrityCheck task \(id.uuidString) failed: \(error.localizedDescription)")
+//                    listener.onLogMsg(LogMsg(msg: "Import task \(id.uuidString) failed: \(error.localizedDescription)"))
+                }
+            }
+            self.queue.async {
+                self.tasks[id] = nil
+            }
+        }
+        
+        queue.async {
+            self.tasks[id] = task
+        }
+        
+        reply(id, nil)
+    }
+    
+    func performIntegrityCheckSB(id: UUID, md: [MediaDetails], bookmarkData: Data, listener: IntegrityCheckProgressListenerLib, maxConcurrent: Int = 5, type: FFMpegResourceType = .linkedLibraries, withReply reply: @escaping (UUID?, Error?) -> Void) async throws {
+//        let file = md
+        //        let files = FileSystemManager.mediaFilesInPath(in: URL(fileURLWithPath: md.filename).deletingLastPathComponent())
+        let totalCount = md.count
+        
+        var isStale: Bool = false
+        
+        let location = try URL(resolvingBookmarkData: bookmarkData, bookmarkDataIsStale: &isStale)
+        location.startAccessingSecurityScopedResource()
+      defer {
+        location.stopAccessingSecurityScopedResource()
+      }
+        
+        // Create a TaskGroup to handle concurrent processing
+        try await withThrowingTaskGroup(of: Void.self) { group in
+            var activeTasks = 0
+            var completedCount = 0
+            
+            if(md.count <= 0){
+                CheckIntegrityProgressStore.shared.setProgress(1.0, for: id, done: true)
+            }else{
+                for file in md {
+                // 1. If we hit our concurrency limit, wait for one task to finish
+                if activeTasks >= maxConcurrent {
+                    _ = try await group.next()
+                    activeTasks -= 1
+                    completedCount += 1
+                    
+                    // Safe to report overall batch progress here
+//                    listener.onProgress(ProgressUpdate(allCount: totalCount, current: completedCount)) //  completedCount, totalCount)
+                    try Task.checkCancellation()
+                    let progress = Double(completedCount) / Double(totalCount)
+                    CheckIntegrityProgressStore.shared.setProgress(progress, for: id, done: completedCount == totalCount)
+                }
+                
+                activeTasks += 1
+                group.addTask {
+    //                do {
+                        //                            let md = try await self.getFFProbeForType(type).runFFProbe(on: URL(fileURLWithPath: file.path))
+                        //                            if md.filename == "/" ||  md.filename == "" {
+                        //                                return
+                        //                            }
+                        
+                        //                            listener.onImportedMedia(md)
+                        listener.onMediaStateChanged(id: file.id, result: .validating)
+                    
+                        await Task.yield()
+                        try await Task.sleep(nanoseconds: 100_000_000)
+                        
+                    
+                        
+//                        let res = try await self.getFFProbeForType(type).checkIntegrity(item: file, onProgress: { progress in
+//                            // Force the UI update to hop back to the Main Actor safely
+//    //                        Task { @MainActor in
+////                            DispatchQueue.main.async {
+//                                print("Progress: \(progress)")
+//                                listener.onSingleTaskProgress(id: file.id, progress: progress)
+////                            }
+//                        })
+                    var locBase = location
+                    file.fileURLSB = locBase.appending(path: file.filenameOnly)
+                    let lastTimestamp = LockedBox(Date())
+                    let res = try await /*self.getFFProbeForType(type)*/ FFProbeLibNG().checkIntegritySB2(item: file) { progress in
+                        
+                        // 2. Safely check and update the timestamp atomically on the spot
+                        let shouldUpdateProgress = lastTimestamp.mutate { lastTime -> Bool in
+                            let now = Date()
+                            if now.timeIntervalSince(lastTime) >= 0.1 {
+                                lastTime = now // Updates immediately, blocking the throttling flood
+                                return true
+                            }
+                            return false
+                        }
+                        
+                        // 3. If the throttle check passed, dispatch the UI update
+                        if shouldUpdateProgress || progress == 1.0 {
+                            if file.taskType != .validated && file.taskType != .corrupted {
+                                
+                                // This call is synchronous, keeping the outer closure happy
+                                listener.onSingleTaskProgress(id: file.id, progress: progress)
+                                
+                                // ✅ FIXED: Removed try? await Task.sleep and await Task.yield()
+                                // Your LockedBox throttle handles the frame-thrashing perfectly now.
+                            }
+                        }
+                    }
+//                    if(res != .success){
+////                                md.taskType = .corrupted
+//                        listener.onMediaStateChanged(id: md.id, result: .corrupted)
+////                                clientProxy.didMediaStateChange(id: md.id, state: .corrupted)
+//                        listener.onLogMsg(LogMsg(msg: "Failed to process \(file.path): \(res.description) > File is corrupted!", type: .error))
+////                                clientProxy.didLogMsg(msg: LogMsg(msg: "Failed to process \(file.path): \(res.description) > File is corrupted!", type: .error))
+//                    }else{
+////                                md.taskType = .validated
+//                        listener.onMediaStateChanged(id: md.id, result: .validated)
+////                                clientProxy.didMediaStateChange(id: md.id, state: .validated)
+//                        listener.onLogMsg(LogMsg(msg: "Loaded media file \(file.path): \(res.description) ...", type: .info))
+////                                clientProxy.didLogMsg(msg: LogMsg(msg: "Loaded media file \(file.path): \(res.description) ...", type: .info))
+//                    }
+                        if(res != .success){
+                            listener.onMediaStateChanged(id: file.id, result: .corrupted)
+                        }else{
+                            listener.onMediaStateChanged(id:file.id, result: .validated)
+                        }
+    //                } catch {
+    //                    print("Failed to process \(md.filename): \(error)")
+    //                }
+                    }
+                }
+                
+                // 3. Drain the remaining tasks in the final batch
+                for try await _ in group {
+                    completedCount += 1
+//                    listener.onProgress(ProgressUpdate(allCount: totalCount, current: completedCount))  // )(completedCount, totalCount)
+                    try Task.checkCancellation()
+                    let progress = Double(completedCount) / Double(totalCount)
+                    CheckIntegrityProgressStore.shared.setProgress(progress, for: id, done: completedCount == totalCount)
+                }
+            }
+        }
+        
+        // 4. Batch complete
+//        listener.onCompleted(ImportResult(outputPath: "", id: id))
+        listener.onCompleted(TaskResult(id: id, progress: 1.0, success: true))
+        reply(id, nil)
+    }
+    
+    // --------------------------------- SB END --------------------------------
     
     public func startConversionTask(md: [MediaDetails], taskConfig: XPCServiceConversionTaskConfig, listener: ConversionProgressListenerLib, withReply reply: @escaping @Sendable (UUID?, Error?) -> Void) {
         logger.info("startConvertTask called")

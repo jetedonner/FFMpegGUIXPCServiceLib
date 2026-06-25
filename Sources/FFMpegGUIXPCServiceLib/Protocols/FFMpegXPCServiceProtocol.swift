@@ -25,6 +25,8 @@ import FFMpegSwiftManagerLib
     func startImportTaskSB(taskConfig: XPCServiceImportTaskConfigSB, listener: ImportProgressListenerLib, withReply reply: @escaping @Sendable (UUID?, Error?) -> Void)
     func observeImportProgressSB(taskID: UUID, withReply reply: @escaping (Double, Bool, Error?) -> Void)
     
+    func startIntegrityCheckTaskSB(md: [MediaDetails], taskConfig: XPCServiceIntegrityCheckTaskConfigSB, listener: IntegrityCheckProgressListenerLib, withReply reply: @escaping @Sendable (UUID?, Error?) -> Void)
+    
     // --------------------------------------------------------------------
     
     // IMPORT Functions
