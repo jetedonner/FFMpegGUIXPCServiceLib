@@ -50,27 +50,6 @@ public class ListenerHelperNG {
         return listenerInterface
     }
     
-    public static func setImportTaskInterface(interface: NSXPCInterface) -> NSXPCInterface {
-        var iface = interface
-        let selector = #selector(
-            FFMpegXPCServiceProtocol.startImportTask(taskConfig:listener:withReply:)
-        )
-
-        // 1. listener (argument 1) → remote object, use setInterface
-        iface.setInterface(
-            ListenerHelperNG.getImportProgressListenerInterface(),
-            for: selector,
-            argumentIndex: 1,
-            ofReply: false
-        )
-
-        iface = AllowedClassesHelper.allowClassesForSelector(interface: iface, selector: selector, argumentIndex: 0, allowedObjects: NSSet(array: [
-            XPCServiceImportTaskConfig.self
-        ]))
-        
-        return iface
-    }
-    
     public static func setImportTaskInterfaceSB(interface: NSXPCInterface) -> NSXPCInterface {
         var iface = interface
         let selector = #selector(
@@ -105,10 +84,6 @@ public class ListenerHelperNG {
             TaskResult.self
         ]))
         
-//        listenerInterface = AAllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(IntegrityCheckProgressListenerLib.onImportedMedia(_:)), argumentIndex: 0, allowedObjects: NSSet(array: [
-//            MediaDetails.self
-//        ]))
-        
         listenerInterface = AllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(IntegrityCheckProgressListenerLib.onBatchTaskProgress(id:progress:)), argumentIndex: 0, allowedObjects: NSSet(array: [
             NSUUID.self
         ]))
@@ -126,31 +101,6 @@ public class ListenerHelperNG {
         ]))
         
         return listenerInterface
-    }
-    
-    public static func setCheckIntegrityTaskInterface(interface: NSXPCInterface) -> NSXPCInterface {
-        var iface = interface
-        let selector = #selector(
-            FFMpegXPCServiceProtocol.startIntegrityCheckTask(md:taskConfig:listener:withReply:) //(
-        )
-        
-        iface.setInterface(
-            ListenerHelperNG.getCheckIntegrityProgressListenerInterface(),
-            for: selector,
-            argumentIndex: 2,
-            ofReply: false
-        )
-        
-        iface = AllowedClassesHelper.allowClassesForSelector(interface: iface, selector: selector, argumentIndex: 0, allowedObjects: NSSet(array: [
-            NSArray.self,
-            MediaDetails.self
-        ]))
-        
-        iface = AllowedClassesHelper.allowClassesForSelector(interface: iface, selector: selector, argumentIndex: 1, allowedObjects: NSSet(array: [
-            XPCServiceIntegrityCheckTaskConfig.self
-        ]))
-        
-        return iface
     }
     
     public static func setCheckIntegrityTaskInterfaceSB(interface: NSXPCInterface) -> NSXPCInterface {
@@ -208,63 +158,6 @@ public class ListenerHelperNG {
         
         return listenerInterface
     }
-    
-    public static func setConversionTaskInterface(interface: NSXPCInterface) -> NSXPCInterface {
-        
-        var iface = interface
-        let selector = #selector(
-            FFMpegXPCServiceProtocol.startConversionTask(md:taskConfig:listener:withReply:)
-        )
-        
-        iface.setInterface(
-            ListenerHelperNG.getConversionProgressListenerInterface(),
-            for: selector,
-            argumentIndex: 2,
-            ofReply: false
-        )
-        
-        iface = AllowedClassesHelper.allowClassesForSelector(interface: iface, selector: selector, argumentIndex: 0, allowedObjects: NSSet(array: [
-            NSArray.self,
-            MediaDetails.self
-        ]))
-        
-        iface = AllowedClassesHelper.allowClassesForSelector(interface: iface, selector: selector, argumentIndex: 1, allowedObjects: NSSet(array: [
-            XPCServiceConversionTaskConfig.self
-        ]))
-        
-        return iface
-    }
-    
-//    public static func getConversionProgressListenerInterfaceSB() -> NSXPCInterface {
-//        
-//        var listenerInterface = NSXPCInterface(with: ConversionProgressListenerLib.self)
-//        
-//        listenerInterface = AllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(ConversionProgressListenerLib.onLogMsg(_:)), argumentIndex: 0, allowedObjects: NSSet(array: [
-//            LogMsg.self
-//        ]))
-//        
-//        listenerInterface = AllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(ConversionProgressListenerLib.onCompleted(_:)), argumentIndex: 0, allowedObjects: NSSet(array: [
-//            TaskResult.self
-//        ]))
-//        
-//        listenerInterface = AllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(ConversionProgressListenerLib.onBatchTaskProgress(id:progress:)), argumentIndex: 0, allowedObjects: NSSet(array: [
-//            NSUUID.self
-//        ]))
-//        
-//        listenerInterface = AllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(ConversionProgressListenerLib.onSingleTaskProgress(id:progress:)), argumentIndex: 0, allowedObjects: NSSet(array: [
-//            NSUUID.self
-//        ]))
-//        
-//        
-//        listenerInterface = AllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(ConversionProgressListenerLib.onMediaStateChanged(id:result:)), argumentIndex: 0, allowedObjects: NSSet(array: [
-//            NSUUID.self
-//        ]))
-//        listenerInterface = AllowedClassesHelper.allowClassesForSelector(interface: listenerInterface, selector: #selector(ConversionProgressListenerLib.onMediaStateChanged(id:result:)), argumentIndex: 1, allowedObjects: NSSet(array: [
-//            TaskTypeBase.self
-//        ]))
-//        
-//        return listenerInterface
-//    }
     
     public static func setConversionTaskInterfaceSB(interface: NSXPCInterface) -> NSXPCInterface {
         
