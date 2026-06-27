@@ -66,167 +66,172 @@ public class FFMpegXPCService: NSObject, FFMpegXPCServiceProtocol, @unchecked Se
         do {
             
             var isStale: Bool = false
-            
+                
             let location = try URL(resolvingBookmarkData: url, bookmarkDataIsStale: &isStale)
-          defer {
-            location.stopAccessingSecurityScopedResource()
-          }
-            let files = FilesystemManager.mediaFilesInPath(in: location, recurseIntoSubDirs: recurseIntoSubDirs, configMgr: self.configMgr ?? .shared)
-        let totalCount = files.count
-        
-        // Create a TaskGroup to handle concurrent processing
-        try await withThrowingTaskGroup(of: Void.self) { group in
-            var activeTasks = 0
-            var completedCount = 0
+            defer {
+                location.stopAccessingSecurityScopedResource()
+            }
             
-            if(files.count <= 0){
-                ImportProgressStore.shared.setProgress(1.0, for: id, done: true)
-            }else{
-                for file in files {
-                    guard FileSecurityManager.isFileValidMedia(url: file) else {
-                        continue
-                    }
-                    if activeTasks >= maxConcurrent {
-                        _ = try await group.next()
-                        activeTasks -= 1
-                        completedCount += 1
+            let files = FilesystemManager.mediaFilesInPath(in: location, recurseIntoSubDirs: recurseIntoSubDirs, configMgr: self.configMgr ?? .shared)
+            let totalCount = files.count
+        
+            // Create a TaskGroup to handle concurrent processing
+            try await withThrowingTaskGroup(of: Void.self) { group in
+                var activeTasks = 0
+                var completedCount = 0
+                
+                if(files.count <= 0){
+                    ImportProgressStore.shared.setProgress(1.0, for: id, done: true)
+                }else{
+                    for file in files {
+                        guard FileSecurityManager.isFileValidMedia(url: file) else {
+                            continue
+                        }
+                        if activeTasks >= maxConcurrent {
+                            _ = try await group.next()
+                            activeTasks -= 1
+                            completedCount += 1
+                            
+    //                        listener.onProgress(ProgressUpdate(allCount: totalCount, current: completedCount))
+                            try Task.checkCancellation()
+                            let progress = Double(completedCount) / Double(totalCount)
+                            ImportProgressStore.shared.setProgress(progress, for: id, done: completedCount == totalCount)
+    //                        clientProxy.didUpdateBatchImportProgress(id: id, progress: progress)
+                        }
                         
-//                        listener.onProgress(ProgressUpdate(allCount: totalCount, current: completedCount))
+                        activeTasks += 1
+                        group.addTask {
+                            do {
+                                
+    //                            var isStale: Bool = false
+    //
+    //                            let location = try URL(resolvingBookmarkData: bookmarkData, bookmarkDataIsStale: &isStale)
+    //                          defer {
+    //                            location.stopAccessingSecurityScopedResource()
+    //                          }
+                              // Use the resource at the location URL.
+                    //            Task { @MainActor in
+                    ////                do {
+                                let md = FFProbeLibNG().runFFProbeSB(on: URL(fileURLWithPath: file.path)) { logMsg in
+                                    listener.onLogMsg(logMsg)
+                                }
+                                print(md.filenameOnly)
+                                if md.filename == "/" ||  md.filename == "" {
+                                    return
+                                }
+                                md.taskType = .importing
+                                listener.onImportedMedia(md)
+    //                                completion(true)
+                    //                } catch {
+                    //                    print("Error getting FFProbe: \(error)")
+                    //                    completion(false)
+                    //                }
+                    //            }
+    //                            return
+                                
+    //                            let md = try await self.getFFProbeForType(type).runFFProbe(on: URL(fileURLWithPath: file.path)) { logMsg in
+    //                                listener.onLogMsg(logMsg)
+    //                            }
+    //
+    //                            if md.filename == "/" ||  md.filename == "" {
+    //                                return
+    //                            }
+    //                            md.taskType = .importing
+    //                            listener.onImportedMedia(md)
+    //                            clientProxy.didFindMedia(media: md)
+                                listener.onLogMsg(LogMsg(msg: "Loaded \(md.filename) for integrity check ...", type: .info))
+    //                            clientProxy.didLogMsg(msg: LogMsg(msg: "Loaded \(md.filename) for integrity check ...", type: .info))
+                                await Task.yield()
+                                try await Task.sleep(nanoseconds: 100_000_000)
+                                listener.onMediaStateChanged(id: md.id, result: .validating)
+    //                            clientProxy.didMediaStateChange(id: md.id, state: .validating)
+                                await Task.yield()
+                                try await Task.sleep(nanoseconds: 100_000_000)
+                                // 1. Change to a thread-safe LockedBox
+    //                            let lastTimestamp = LockedBox(Date())
+    //                            let res = try await self.getFFProbeForType(type).checkIntegrity(item: md) {  progress in
+    //                                // 2. Safely check and update the timestamp atomically on the spot
+    //                                let shouldUpdateProgress = lastTimestamp.mutate { lastTime -> Bool in
+    //                                    let now = Date()
+    //                                    if now.timeIntervalSince(lastTime) >= 0.1 {
+    //                                        lastTime = now // Updates immediately, blocking the throttling flood
+    //                                        return true
+    //                                    }
+    //                                    return false
+    //                                }
+    //
+    //                                // 3. If the throttle check passed, dispatch the UI update to the MainActor
+    //                                if shouldUpdateProgress || progress == 1.0 {
+    ////                                    Task { @MainActor in
+    //                                        if md.taskType != .validated && md.taskType != .corrupted {
+    //                                            listener.onSingleTaskProgress(id: md.id, progress: progress)
+    ////                                            clientProxy.didUpdateSingleImportProgress(id: md.id, progress: progress)
+    //                                            try? await Task.sleep(nanoseconds: 10_000_000)
+    //                                            await Task.yield()
+    //                                        }
+    ////                                    }
+    //                                }
+    //                            }
+                                // 1. Change to a thread-safe LockedBox
+                                
+                                let lastTimestamp = LockedBox(Date())
+                                let res = FFProbeLibNG().checkIntegritySB(item: md) {  progress in //  try await self.getFFProbeForType(type).checkIntegrity(item: md) { progress in
+                                    
+                                    // 2. Safely check and update the timestamp atomically on the spot
+                                    let shouldUpdateProgress = lastTimestamp.mutate { lastTime -> Bool in
+                                        let now = Date()
+                                        if now.timeIntervalSince(lastTime) >= 0.1 {
+                                            lastTime = now // Updates immediately, blocking the throttling flood
+                                            return true
+                                        }
+                                        return false
+                                    }
+                                    
+                                    // 3. If the throttle check passed, dispatch the UI update
+                                    if shouldUpdateProgress || progress == 1.0 {
+                                        if md.taskType != .validated && md.taskType != .corrupted {
+                                            
+                                            // This call is synchronous, keeping the outer closure happy
+                                            listener.onSingleTaskProgress(id: md.id, progress: progress)
+                                            
+                                            // ✅ FIXED: Removed try? await Task.sleep and await Task.yield()
+                                            // Your LockedBox throttle handles the frame-thrashing perfectly now.
+                                        }
+                                    }
+                                }
+                                
+                                if(res == .error_no_audio_stream){
+                                    listener.onMediaStateChanged(id: md.id, result: .warning)
+                                    listener.onLogMsg(LogMsg(msg: "Warning: No audio stream in \(file.path): \(res.description) > File may be corrupted!", type: .warning))
+                                }else if(res != .success){
+                                    listener.onMediaStateChanged(id: md.id, result: .corrupted)
+                                    listener.onLogMsg(LogMsg(msg: "Failed to process \(file.path): \(res.description) > File is corrupted!", type: .error))
+                                }else {
+                                    listener.onMediaStateChanged(id: md.id, result: .validated)
+                                    listener.onLogMsg(LogMsg(msg: "Loaded media file \(file.path): \(res.description) ...", type: .info))
+    //                                clientProxy.didLogMsg(msg: LogMsg(msg: "Loaded media file \(file.path): \(res.description) ...", type: .info))
+                                }
+                            } catch {
+                                print("Failed to process \(file.path): \(error)")
+                                listener.onLogMsg(LogMsg(msg: "Failed to process \(file.path): \(error)", type: .error))
+                            }
+                        }
+                    }
+                    
+                    // 3. Drain the remaining tasks in the final batch
+                    for try await _ in group {
+                        completedCount += 1
+                        listener.onBatchTaskProgress(id: id, progress: Double(completedCount / totalCount))  // )(completedCount, totalCount)
                         try Task.checkCancellation()
                         let progress = Double(completedCount) / Double(totalCount)
                         ImportProgressStore.shared.setProgress(progress, for: id, done: completedCount == totalCount)
-//                        clientProxy.didUpdateBatchImportProgress(id: id, progress: progress)
                     }
-                    
-                    activeTasks += 1
-                    group.addTask {
-                        do {
-                            
-//                            var isStale: Bool = false
-//                            
-//                            let location = try URL(resolvingBookmarkData: bookmarkData, bookmarkDataIsStale: &isStale)
-//                          defer {
-//                            location.stopAccessingSecurityScopedResource()
-//                          }
-                          // Use the resource at the location URL.
-                //            Task { @MainActor in
-                ////                do {
-                            let md = FFProbeLibNG().runFFProbeSB(on: URL(fileURLWithPath: file.path)) { logMsg in
-                                listener.onLogMsg(logMsg)
-                            }
-                            print(md.filenameOnly)
-                            if md.filename == "/" ||  md.filename == "" {
-                                return
-                            }
-                            md.taskType = .importing
-                            listener.onImportedMedia(md)
-//                                completion(true)
-                //                } catch {
-                //                    print("Error getting FFProbe: \(error)")
-                //                    completion(false)
-                //                }
-                //            }
-//                            return
-                            
-//                            let md = try await self.getFFProbeForType(type).runFFProbe(on: URL(fileURLWithPath: file.path)) { logMsg in
-//                                listener.onLogMsg(logMsg)
-//                            }
-//                            
-//                            if md.filename == "/" ||  md.filename == "" {
-//                                return
-//                            }
-//                            md.taskType = .importing
-//                            listener.onImportedMedia(md)
-//                            clientProxy.didFindMedia(media: md)
-                            listener.onLogMsg(LogMsg(msg: "Loaded \(md.filename) for integrity check ...", type: .info))
-//                            clientProxy.didLogMsg(msg: LogMsg(msg: "Loaded \(md.filename) for integrity check ...", type: .info))
-                            await Task.yield()
-                            try await Task.sleep(nanoseconds: 100_000_000)
-                            listener.onMediaStateChanged(id: md.id, result: .validating)
-//                            clientProxy.didMediaStateChange(id: md.id, state: .validating)
-                            await Task.yield()
-                            try await Task.sleep(nanoseconds: 100_000_000)
-                            // 1. Change to a thread-safe LockedBox
-//                            let lastTimestamp = LockedBox(Date())
-//                            let res = try await self.getFFProbeForType(type).checkIntegrity(item: md) {  progress in
-//                                // 2. Safely check and update the timestamp atomically on the spot
-//                                let shouldUpdateProgress = lastTimestamp.mutate { lastTime -> Bool in
-//                                    let now = Date()
-//                                    if now.timeIntervalSince(lastTime) >= 0.1 {
-//                                        lastTime = now // Updates immediately, blocking the throttling flood
-//                                        return true
-//                                    }
-//                                    return false
-//                                }
-//
-//                                // 3. If the throttle check passed, dispatch the UI update to the MainActor
-//                                if shouldUpdateProgress || progress == 1.0 {
-////                                    Task { @MainActor in
-//                                        if md.taskType != .validated && md.taskType != .corrupted {
-//                                            listener.onSingleTaskProgress(id: md.id, progress: progress)
-////                                            clientProxy.didUpdateSingleImportProgress(id: md.id, progress: progress)
-//                                            try? await Task.sleep(nanoseconds: 10_000_000)
-//                                            await Task.yield()
-//                                        }
-////                                    }
-//                                }
-//                            }
-                            // 1. Change to a thread-safe LockedBox
-                            
-                            let lastTimestamp = LockedBox(Date())
-                            let res = FFProbeLibNG().checkIntegritySB(item: md) {  progress in //  try await self.getFFProbeForType(type).checkIntegrity(item: md) { progress in
-                                
-                                // 2. Safely check and update the timestamp atomically on the spot
-                                let shouldUpdateProgress = lastTimestamp.mutate { lastTime -> Bool in
-                                    let now = Date()
-                                    if now.timeIntervalSince(lastTime) >= 0.1 {
-                                        lastTime = now // Updates immediately, blocking the throttling flood
-                                        return true
-                                    }
-                                    return false
-                                }
-                                
-                                // 3. If the throttle check passed, dispatch the UI update
-                                if shouldUpdateProgress || progress == 1.0 {
-                                    if md.taskType != .validated && md.taskType != .corrupted {
-                                        
-                                        // This call is synchronous, keeping the outer closure happy
-                                        listener.onSingleTaskProgress(id: md.id, progress: progress)
-                                        
-                                        // ✅ FIXED: Removed try? await Task.sleep and await Task.yield()
-                                        // Your LockedBox throttle handles the frame-thrashing perfectly now.
-                                    }
-                                }
-                            }
-                            if(res != .success){
-                                listener.onMediaStateChanged(id: md.id, result: .corrupted)
-                                listener.onLogMsg(LogMsg(msg: "Failed to process \(file.path): \(res.description) > File is corrupted!", type: .error))
-                            }else{
-                                listener.onMediaStateChanged(id: md.id, result: .validated)
-                                listener.onLogMsg(LogMsg(msg: "Loaded media file \(file.path): \(res.description) ...", type: .info))
-//                                clientProxy.didLogMsg(msg: LogMsg(msg: "Loaded media file \(file.path): \(res.description) ...", type: .info))
-                            }
-                        } catch {
-                            print("Failed to process \(file.path): \(error)")
-                            listener.onLogMsg(LogMsg(msg: "Failed to process \(file.path): \(error)", type: .error))
-                        }
-                    }
-                }
-                
-                // 3. Drain the remaining tasks in the final batch
-                for try await _ in group {
-                    completedCount += 1
-                    listener.onBatchTaskProgress(id: id, progress: Double(completedCount / totalCount))  // )(completedCount, totalCount)
-                    try Task.checkCancellation()
-                    let progress = Double(completedCount) / Double(totalCount)
-                    ImportProgressStore.shared.setProgress(progress, for: id, done: completedCount == totalCount)
                 }
             }
-        }
-        
-        // 4. Batch complete
-//        listener.onCompleted(TaskResult(id: id, progress: 1.0, success: true))
-        listener.onLogMsg(LogMsg(msg: "Completed loading (\(totalCount)) media files ... You can now start to work with \(totalCount >= 2 ? "them" : "it").", type: .info))
+            
+            // 4. Batch complete
+    //        listener.onCompleted(TaskResult(id: id, progress: 1.0, success: true))
+            listener.onLogMsg(LogMsg(msg: "Completed loading (\(totalCount)) media files ... You can now start to work with \(totalCount >= 2 ? "them" : "it").", type: .info))
 //        clientProxy.didLogMsg(msg: LogMsg(msg: "Completed loading (\(totalCount)) media files ... You can now start to work with them.", type: .info))
         } catch {
             print("Failed to process ulr ...") // \(location.path): \(error)")
