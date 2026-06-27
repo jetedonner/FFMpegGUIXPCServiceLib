@@ -175,7 +175,7 @@ public class FFMpegXPCService: NSObject, FFMpegXPCServiceProtocol, @unchecked Se
                                 // 1. Change to a thread-safe LockedBox
                                 
                                 let lastTimestamp = LockedBox(Date())
-                                let res = FFProbeLibNG().checkIntegritySB(item: md) {  progress in //  try await self.getFFProbeForType(type).checkIntegrity(item: md) { progress in
+                                let res = FFProbeLibNG().checkIntegritySBNG(item: md) {  progress in //  try await self.getFFProbeForType(type).checkIntegrity(item: md) { progress in
                                     
                                     // 2. Safely check and update the timestamp atomically on the spot
                                     let shouldUpdateProgress = lastTimestamp.mutate { lastTime -> Bool in
@@ -200,10 +200,10 @@ public class FFMpegXPCService: NSObject, FFMpegXPCServiceProtocol, @unchecked Se
                                     }
                                 }
                                 
-                                if(res == .error_no_audio_stream){
+                                if(res.result == .error_no_audio_stream){
                                     listener.onMediaStateChanged(id: md.id, result: .warning)
                                     listener.onLogMsg(LogMsg(msg: "Warning: No audio stream in \(file.path): \(res.description) > File may be corrupted!", type: .warning))
-                                }else if(res != .success){
+                                }else if(res.result != .success){
                                     listener.onMediaStateChanged(id: md.id, result: .corrupted)
                                     listener.onLogMsg(LogMsg(msg: "Failed to process \(file.path): \(res.description) > File is corrupted!", type: .error))
                                 }else {
