@@ -211,6 +211,11 @@ public class FFMpegXPCService: NSObject, FFMpegXPCServiceProtocol, @unchecked Se
                                     listener.onLogMsg(LogMsg(msg: "Loaded media file \(file.path): \(res.description) ...", type: .info))
     //                                clientProxy.didLogMsg(msg: LogMsg(msg: "Loaded media file \(file.path): \(res.description) ...", type: .info))
                                 }
+                                
+                                await Task.yield()
+                                try await Task.sleep(nanoseconds: 100_000_000)
+                                
+                                listener.onSingleTaskCompleted(id: res.mediaId, task: res.task, result: res.result)
                             } catch {
                                 print("Failed to process \(file.path): \(error)")
                                 listener.onLogMsg(LogMsg(msg: "Failed to process \(file.path): \(error)", type: .error))

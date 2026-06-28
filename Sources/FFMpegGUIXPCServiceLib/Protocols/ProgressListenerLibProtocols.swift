@@ -13,7 +13,7 @@ public protocol BaseProgressListenerLib {
     func onLogMsg(_ msg: LogMsg)
     func onBatchTaskProgress(id: UUID, progress: Double)
     func onSingleTaskProgress(id: UUID, progress: Double)
-    func onSingleTaskCompleted(id: UUID, task: TaskTypeBase, result: TaskResultSBNG)
+    func onSingleTaskCompleted(id: UUID, task: TaskTypeBase, result: ConversionResult)
     func onCompleted(_ result: TaskResult)
 }
 
