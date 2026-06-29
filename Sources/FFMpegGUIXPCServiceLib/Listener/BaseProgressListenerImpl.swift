@@ -15,12 +15,12 @@ public class BaseProgressListenerLibImpl: NSObject, BaseProgressListenerLib {
     let onCompleted: (TaskResult) -> Void
     let onBatchTaskProgress: (UUID, Double) -> Void
     let onSingleTaskProgress: (UUID, Double) -> Void
-    let onSingleTaskCompleted: (UUID, TaskTypeBase, ConversionResult) -> Void
+    let onSingleTaskCompleted: (UUID, TaskTypeBase, TaskResultForTaskResultHistory, ConversionResult) -> Void
 
     public init(onLogMsg: @escaping (LogMsg) -> Void,
          onBatchTaskProgress: @escaping (UUID, Double) -> Void,
          onSingleTaskProgress: @escaping (UUID, Double) -> Void,
-         onSingleTaskCompleted: @escaping (UUID, TaskTypeBase, ConversionResult) -> Void,
+         onSingleTaskCompleted: @escaping (UUID, TaskTypeBase, TaskResultForTaskResultHistory, ConversionResult) -> Void,
          onCompleted: @escaping (TaskResult) -> Void) {
         self.onLogMsg = onLogMsg
         self.onBatchTaskProgress = onBatchTaskProgress
@@ -37,8 +37,8 @@ public class BaseProgressListenerLibImpl: NSObject, BaseProgressListenerLib {
         onSingleTaskProgress(id, progress)
     }
     
-    public func onSingleTaskCompleted(id: UUID, task: TaskTypeBase, result: ConversionResult) {
-        onSingleTaskCompleted(id, task, result)
+    public func onSingleTaskCompleted(id: UUID, task: TaskTypeBase, taskResult: TaskResultForTaskResultHistory, result: ConversionResult) {
+        onSingleTaskCompleted(id, task, taskResult, result)
     }
     
     public func onBatchTaskProgress(id: UUID, progress: Double) {
@@ -57,7 +57,7 @@ public class MediaProgressListenerLibImpl: BaseProgressListenerLibImpl, MediaPro
     public init(onLogMsg: @escaping (LogMsg) -> Void,
          onBatchTaskProgress: @escaping (UUID, Double) -> Void,
          onSingleTaskProgress: @escaping (UUID, Double) -> Void,
-         onSingleTaskCompleted: @escaping (UUID, TaskTypeBase, ConversionResult) -> Void,
+         onSingleTaskCompleted: @escaping (UUID, TaskTypeBase, TaskResultForTaskResultHistory, ConversionResult) -> Void,
          onCompleted: @escaping (TaskResult) -> Void,
          onMediaStateChanged: @escaping (UUID, TaskTypeBase) -> Void) {
         self.onMediaStateChanged = onMediaStateChanged
@@ -77,7 +77,7 @@ public class ImportProgressListenerLibImpl: MediaProgressListenerLibImpl, Import
     public init(onLogMsg: @escaping (LogMsg) -> Void,
          onBatchTaskProgress: @escaping (UUID, Double) -> Void,
          onSingleTaskProgress: @escaping (UUID, Double) -> Void,
-        onSingleTaskCompleted: @escaping (UUID, TaskTypeBase, ConversionResult) -> Void,
+        onSingleTaskCompleted: @escaping (UUID, TaskTypeBase, TaskResultForTaskResultHistory, ConversionResult) -> Void,
          onCompleted: @escaping (TaskResult) -> Void,
          onImportedMedia: @escaping (MediaDetails) -> Void,
          onMediaStateChanged: @escaping (UUID, TaskTypeBase) -> Void) {

@@ -219,7 +219,7 @@ public class FFMpegXPCService: NSObject, FFMpegXPCServiceProtocol, @unchecked Se
                                 await Task.yield()
                                 try await Task.sleep(nanoseconds: 100_000_000)
                                 
-                                listener.onSingleTaskCompleted(id: res.mediaId, task: res.task, result:res.result) // finalTaskType) // res.result)
+                                listener.onSingleTaskCompleted(id: res.id, task: res.task, taskResult: .unknown, result:res.result) // finalTaskType) // res.result)
                             } catch {
                                 print("Failed to process \(file.path): \(error)")
                                 listener.onLogMsg(LogMsg(msg: "Failed to process \(file.path): \(error)", type: .error))
