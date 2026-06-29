@@ -200,13 +200,17 @@ public class FFMpegXPCService: NSObject, FFMpegXPCServiceProtocol, @unchecked Se
                                     }
                                 }
                                 
+//                                var finalTaskType: TaskTypeBase = .validated
                                 if(res.result == .error_no_audio_stream){
+//                                    finalTaskType = .validated
                                     listener.onMediaStateChanged(id: md.id, result: .warning)
                                     listener.onLogMsg(LogMsg(msg: "Warning: No audio stream in \(file.path): \(res.description) > File may be corrupted!", type: .warning))
                                 }else if(res.result != .success){
+//                                    finalTaskType = .corrupted
                                     listener.onMediaStateChanged(id: md.id, result: .corrupted)
                                     listener.onLogMsg(LogMsg(msg: "Failed to process \(file.path): \(res.description) > File is corrupted!", type: .error))
                                 }else {
+//                                    finalTaskType = .validated
                                     listener.onMediaStateChanged(id: md.id, result: .validated)
                                     listener.onLogMsg(LogMsg(msg: "Loaded media file \(file.path): \(res.description) ...", type: .info))
     //                                clientProxy.didLogMsg(msg: LogMsg(msg: "Loaded media file \(file.path): \(res.description) ...", type: .info))
@@ -215,7 +219,7 @@ public class FFMpegXPCService: NSObject, FFMpegXPCServiceProtocol, @unchecked Se
                                 await Task.yield()
                                 try await Task.sleep(nanoseconds: 100_000_000)
                                 
-                                listener.onSingleTaskCompleted(id: res.mediaId, task: res.task, result: res.result)
+                                listener.onSingleTaskCompleted(id: res.mediaId, task: res.task, result:res.result) // finalTaskType) // res.result)
                             } catch {
                                 print("Failed to process \(file.path): \(error)")
                                 listener.onLogMsg(LogMsg(msg: "Failed to process \(file.path): \(error)", type: .error))
