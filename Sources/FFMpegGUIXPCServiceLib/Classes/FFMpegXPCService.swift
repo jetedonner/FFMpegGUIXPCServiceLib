@@ -201,14 +201,17 @@ public class FFMpegXPCService: NSObject, FFMpegXPCServiceProtocol, @unchecked Se
                                 }
                                 
 //                                var finalTaskType: TaskTypeBase = .validated
+                                var taskRes: TaskResultForTaskResultHistory = .success
                                 if(res.result == .error_no_audio_stream){
 //                                    finalTaskType = .validated
                                     listener.onMediaStateChanged(id: md.id, result: .warning)
                                     listener.onLogMsg(LogMsg(msg: "Warning: No audio stream in \(file.path): \(res.description) > File may be corrupted!", type: .warning))
+                                    taskRes = .warning
                                 }else if(res.result != .success){
 //                                    finalTaskType = .corrupted
                                     listener.onMediaStateChanged(id: md.id, result: .corrupted)
                                     listener.onLogMsg(LogMsg(msg: "Failed to process \(file.path): \(res.description) > File is corrupted!", type: .error))
+                                    taskRes = .error
                                 }else {
 //                                    finalTaskType = .validated
                                     listener.onMediaStateChanged(id: md.id, result: .validated)
@@ -219,7 +222,7 @@ public class FFMpegXPCService: NSObject, FFMpegXPCServiceProtocol, @unchecked Se
                                 await Task.yield()
                                 try await Task.sleep(nanoseconds: 100_000_000)
                                 
-                                listener.onSingleTaskCompleted(id: res.id, task: res.task, taskResult: .unknown, result:res.result) // finalTaskType) // res.result)
+                                listener.onSingleTaskCompleted(id: res.id, task: res.task, taskResult: taskRes, result:res.result) // finalTaskType) // res.result)
                             } catch {
                                 print("Failed to process \(file.path): \(error)")
                                 listener.onLogMsg(LogMsg(msg: "Failed to process \(file.path): \(error)", type: .error))
@@ -402,11 +405,13 @@ public class FFMpegXPCService: NSObject, FFMpegXPCServiceProtocol, @unchecked Se
 //                        listener.onLogMsg(LogMsg(msg: "Loaded media file \(file.path): \(res.description) ...", type: .info))
 ////                                clientProxy.didLogMsg(msg: LogMsg(msg: "Loaded media file \(file.path): \(res.description) ...", type: .info))
 //                    }
+//                    var taskRes: TaskResultForTaskResultHistory = .success
                         if(res != .success){
                             listener.onMediaStateChanged(id: file.id, result: .corrupted)
                         }else{
                             listener.onMediaStateChanged(id:file.id, result: .validated)
                         }
+//                    listener.onSingleTaskCompleted(id: file.id, task: .validating, taskResult: taskRes, result:res.result) // finalTaskType) //
     //                } catch {
     //                    print("Failed to process \(md.filename): \(error)")
     //                }
@@ -756,6 +761,8 @@ public class FFMpegXPCService: NSObject, FFMpegXPCServiceProtocol, @unchecked Se
     //                                listener.onConversionProgress(id: file.id, progress: 1.0)
     //                                listener.onLogMsg(LogMsg(msg: "Loaded media file \(file.path): \(res) ..."))
                             }
+                            
+                            listener.onSingleTaskCompleted(id: file.id, task: .sanitizing, taskResult: (res != .success ? .error : .success), result: res)
                             
                             await Task.yield()
                             try await Task.sleep(nanoseconds: 100_000_000)
