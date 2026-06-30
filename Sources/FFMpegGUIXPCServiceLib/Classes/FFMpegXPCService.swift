@@ -617,6 +617,8 @@ public class FFMpegXPCService: NSObject, FFMpegXPCServiceProtocol, @unchecked Se
     //                                listener.onConversionProgress(id: file.id, progress: 1.0)
     //                                listener.onLogMsg(LogMsg(msg: "Loaded media file \(file.path): \(res) ..."))
                             }
+                            
+                            listener.onSingleTaskCompleted(id: file.id, task: .converting, taskResult: (res != .success ? .error : .success), result: res)
                         
 //                        Task { @MainActor in
 //                            listener.onConversionProgress(id: file.id, progress: 1.0)
