@@ -13,7 +13,11 @@ public protocol BaseProgressListenerLib {
     func onLogMsg(_ msg: LogMsg)
     func onBatchTaskProgress(id: UUID, progress: Double)
     func onSingleTaskProgress(id: UUID, progress: Double)
+    func onSingleTaskResult(data: Data)
     func onSingleTaskCompleted(id: UUID, task: TaskTypeBase, taskResult: TaskResultForTaskResultHistory, result: ConversionResult)
+//    func onSingleTaskResult(iresult: TaskResultSB)
+    // 3. Pass your Swift struct as serialized JSON 'Data'
+//    func onSingleTaskResult(data: Data)
     func onCompleted(_ result: TaskResult)
 }
 

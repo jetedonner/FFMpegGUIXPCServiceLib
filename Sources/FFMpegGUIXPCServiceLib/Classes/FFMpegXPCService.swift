@@ -121,6 +121,13 @@ public class FFMpegXPCService: NSObject, FFMpegXPCServiceProtocol, @unchecked Se
                                 }
                                 md.taskType = .importing
                                 listener.onImportedMedia(md)
+                                
+// =============================== START SEND TASK RESULT ===============================
+//                                if let jsonData = try? JSONEncoder().encode(res) {
+//                                    listener.onSingleTaskResult(data: jsonData)
+//                                }
+// ================================ END SEND TASK RESULT ================================
+                                
     //                                completion(true)
                     //                } catch {
                     //                    print("Error getting FFProbe: \(error)")
@@ -175,7 +182,8 @@ public class FFMpegXPCService: NSObject, FFMpegXPCServiceProtocol, @unchecked Se
                                 // 1. Change to a thread-safe LockedBox
                                 
                                 let lastTimestamp = LockedBox(Date())
-                                let res = FFProbeLibNG().checkIntegritySBNG(item: md) {  progress in //  try await self.getFFProbeForType(type).checkIntegrity(item: md) { progress in
+                                
+                                var res = FFProbeLibNG().checkIntegritySBNG(item: md, errRecIntensity: self.configMgr!.avErrRecognitionLevel) {  progress in //  try await self.getFFProbeForType(type).checkIntegrity(item: md) { progress in
                                     
                                     // 2. Safely check and update the timestamp atomically on the spot
                                     let shouldUpdateProgress = lastTimestamp.mutate { lastTime -> Bool in
@@ -207,6 +215,7 @@ public class FFMpegXPCService: NSObject, FFMpegXPCServiceProtocol, @unchecked Se
                                     listener.onMediaStateChanged(id: md.id, result: .warning)
                                     listener.onLogMsg(LogMsg(msg: "Warning: No audio stream in \(file.path): \(res.description) > File may be corrupted!", type: .warning))
                                     taskRes = .warning
+                                    res.taskResult = .warning
                                 }else if(res.result != .success){
 //                                    finalTaskType = .corrupted
                                     listener.onMediaStateChanged(id: md.id, result: .corrupted)
@@ -222,6 +231,9 @@ public class FFMpegXPCService: NSObject, FFMpegXPCServiceProtocol, @unchecked Se
                                 await Task.yield()
                                 try await Task.sleep(nanoseconds: 100_000_000)
                                 
+                                if let jsonData = try? JSONEncoder().encode(res) {
+                                    listener.onSingleTaskResult(data: jsonData)
+                                }
                                 listener.onSingleTaskCompleted(id: res.id, task: res.task, taskResult: taskRes, result:res.result) // finalTaskType) // res.result)
                             } catch {
                                 print("Failed to process \(file.path): \(error)")

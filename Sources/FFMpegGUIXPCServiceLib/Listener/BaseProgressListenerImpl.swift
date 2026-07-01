@@ -15,16 +15,19 @@ public class BaseProgressListenerLibImpl: NSObject, BaseProgressListenerLib {
     let onCompleted: (TaskResult) -> Void
     let onBatchTaskProgress: (UUID, Double) -> Void
     let onSingleTaskProgress: (UUID, Double) -> Void
+    let onSingleTaskResult: (Data) -> Void
     let onSingleTaskCompleted: (UUID, TaskTypeBase, TaskResultForTaskResultHistory, ConversionResult) -> Void
 
     public init(onLogMsg: @escaping (LogMsg) -> Void,
          onBatchTaskProgress: @escaping (UUID, Double) -> Void,
          onSingleTaskProgress: @escaping (UUID, Double) -> Void,
+         onSingleTaskResult: @escaping (Data) -> Void,
          onSingleTaskCompleted: @escaping (UUID, TaskTypeBase, TaskResultForTaskResultHistory, ConversionResult) -> Void,
          onCompleted: @escaping (TaskResult) -> Void) {
         self.onLogMsg = onLogMsg
         self.onBatchTaskProgress = onBatchTaskProgress
         self.onSingleTaskProgress = onSingleTaskProgress
+        self.onSingleTaskResult = onSingleTaskResult
         self.onSingleTaskCompleted = onSingleTaskCompleted
         self.onCompleted = onCompleted
     }
@@ -35,6 +38,10 @@ public class BaseProgressListenerLibImpl: NSObject, BaseProgressListenerLib {
     
     public func onSingleTaskProgress(id: UUID, progress: Double) {
         onSingleTaskProgress(id, progress)
+    }
+    
+    public func onSingleTaskResult(data: Data) {
+        onSingleTaskResult(data)
     }
     
     public func onSingleTaskCompleted(id: UUID, task: TaskTypeBase, taskResult: TaskResultForTaskResultHistory, result: ConversionResult) {
@@ -57,11 +64,12 @@ public class MediaProgressListenerLibImpl: BaseProgressListenerLibImpl, MediaPro
     public init(onLogMsg: @escaping (LogMsg) -> Void,
          onBatchTaskProgress: @escaping (UUID, Double) -> Void,
          onSingleTaskProgress: @escaping (UUID, Double) -> Void,
+         onSingleTaskResult: @escaping (Data) -> Void,
          onSingleTaskCompleted: @escaping (UUID, TaskTypeBase, TaskResultForTaskResultHistory, ConversionResult) -> Void,
          onCompleted: @escaping (TaskResult) -> Void,
          onMediaStateChanged: @escaping (UUID, TaskTypeBase) -> Void) {
         self.onMediaStateChanged = onMediaStateChanged
-        super.init(onLogMsg: onLogMsg, onBatchTaskProgress: onBatchTaskProgress, onSingleTaskProgress: onSingleTaskProgress, onSingleTaskCompleted: onSingleTaskCompleted, onCompleted: onCompleted)
+        super.init(onLogMsg: onLogMsg, onBatchTaskProgress: onBatchTaskProgress, onSingleTaskProgress: onSingleTaskProgress, onSingleTaskResult: onSingleTaskResult, onSingleTaskCompleted: onSingleTaskCompleted, onCompleted: onCompleted)
     }
         
     public func onMediaStateChanged(id: UUID, result: TaskTypeBase) {
@@ -77,12 +85,13 @@ public class ImportProgressListenerLibImpl: MediaProgressListenerLibImpl, Import
     public init(onLogMsg: @escaping (LogMsg) -> Void,
          onBatchTaskProgress: @escaping (UUID, Double) -> Void,
          onSingleTaskProgress: @escaping (UUID, Double) -> Void,
-        onSingleTaskCompleted: @escaping (UUID, TaskTypeBase, TaskResultForTaskResultHistory, ConversionResult) -> Void,
+         onSingleTaskResult: @escaping (Data) -> Void,
+         onSingleTaskCompleted: @escaping (UUID, TaskTypeBase, TaskResultForTaskResultHistory, ConversionResult) -> Void,
          onCompleted: @escaping (TaskResult) -> Void,
          onImportedMedia: @escaping (MediaDetails) -> Void,
          onMediaStateChanged: @escaping (UUID, TaskTypeBase) -> Void) {
         self.onImportedMediaHandler = onImportedMedia
-        super.init(onLogMsg: onLogMsg, onBatchTaskProgress: onBatchTaskProgress, onSingleTaskProgress: onSingleTaskProgress, onSingleTaskCompleted: onSingleTaskCompleted, onCompleted:  onCompleted, onMediaStateChanged: onMediaStateChanged)
+        super.init(onLogMsg: onLogMsg, onBatchTaskProgress: onBatchTaskProgress, onSingleTaskProgress: onSingleTaskProgress, onSingleTaskResult: onSingleTaskResult, onSingleTaskCompleted: onSingleTaskCompleted, onCompleted:  onCompleted, onMediaStateChanged: onMediaStateChanged)
     }
 
     public func onImportedMedia(_ media: MediaDetails) {
